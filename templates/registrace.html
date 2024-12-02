@@ -1,0 +1,65 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page2">
+        <h1>Registrace</h1>
+        <p>Vytvořte si účet a ihned si objednejte.</p>
+    </section>
+
+
+
+
+
+
+
+    <section class="content-section">
+        <div class="container">
+        
+            <div class="container-column">
+            </div>
+
+
+            <div class="container-column">
+
+                <h2>Registrace</h2>
+                <hr>
+
+                <div class="form-container">
+                    <form>
+                        <label class="lbl">Jméno</label>
+                        <input class="inp" type="text" placeholder="Vaše jméno">
+            
+                        <label class="lbl">Přijmení</label>
+                        <input class="inp" type="text" placeholder="Vaše přijmení">                        
+
+                        <label class="lbl">E-mail</label>
+                        <input class="inp" type="email" placeholder="Váš e-mail">
+                
+                        <label class="lbl">Heslo</label>
+                        <input class="inp" type="password" placeholder="Vaše heslo">
+
+                        <label class="lbl">Heslo (znova)</label>
+                        <input class="inp" type="password" placeholder="Vaše heslo (znova)">
+
+                        <label class="lbl">Země</label>
+                        <select class="sel" >
+                            <option value="cz">Česká republika</option>
+                            <option value="sk">Slovensko</option>
+                        </select>
+                
+                        <button onclick="addAlert('Upozornění','Funkce není dostupná!')" class="btn">Odeslat</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="container-column">
+            </div>
+
+            
+            
+        </div>
+    </section>
+
+   
+
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page">
+        <h1>Vítejte na rozvozJidla.cz</h1>
+        <p>Ihned objednáš za 30 minut doma máš</p>
+        <div class="search-container">
+                <input type="text" placeholder="Na co máte chuť?">
+            <button>Vyhledat</button>
+        </div>
+    </section>
+
+
+
+    <section class="content-section">
+        <div class="container">
+            <div class="container-column" align="center">
+                <div class="mainicons"><span><i class="fa fa-users" aria-hidden="true"></i></span><br>3.000+ zákazníků</div>
+            </div>
+            <div class="container-column" align="center">
+                <div class="mainicons"><span><i class="fa fa-shopping-basket" aria-hidden="true"></i></span><br>8.000+ objednávek</div>
+            </div>
+            <div class="container-column" align="center">
+                <div class="mainicons"><span><i class="fa fa-cutlery" aria-hidden="true"></i></span><br>200+ restaurací</div>
+            </div>
+            <div class="container-column" align="center">
+                <div class="mainicons"><span><i class="fa fa-clock-o" aria-hidden="true"></i></span><br>30 minutové doručení</div>
+            </div>
+        </div>
+    </section>
+
+
+
+
+    <section class="content-section dark" id="onas">
+
+        <div class="content-body">
+
+            <div class="text-content">
+
+                <h2>O nás</h2>
+                <hr>
+                <p>
+                    Jsme česká služba rozvozu jídla, která nabízí rychlé a pohodlné doručení oblíbených pokrmů přímo k vám domů nebo do kanceláře. Naším cílem je poskytnout širokou nabídku restaurací, aby si každý mohl vybrat podle svých chutí. Naše platforma je jednoduchá na použití a objednávka probíhá bez komplikací. Dbáme na to, aby jídlo bylo doručeno čerstvé a včas, a to i při vysoké poptávce. Nabízíme jídlo z různých kuchyní, od české po exotické speciality. S naším systémem můžete sledovat stav objednávky v reálném čase. Naši kurýři jsou školeni, aby poskytli co nejlepší službu. K dispozici máme různé způsoby platby, včetně online plateb i platby při převzetí. Naším cílem je spokojenost zákazníků a vysoká kvalita našich služeb. RozvozJidla.cz je spolehlivým partnerem pro všechny, kteří si chtějí užít kvalitní jídlo bez čekání.
+                </p>
+            </div>
+            <img class="cont-img" src="{{ url_for('static', filename='images/icon.png') }}">
+        </div>
+    </section>
+
+
+
+    <section class="content-section" id="kontakt">
+        <div class="container">
+        
+            
+
+            <div class="container-column">
+
+                <h2>Kontakt</h2>
+                <hr>
+
+                <div class="form-container">
+                    <form>
+                        <label class="lbl">Jméno</label>
+                        <input class="inp" type="text" placeholder="Vaše jméno">
+                
+                        <label class="lbl">E-mail</label>
+                        <input class="inp" type="email" placeholder="Váš e-mail">
+                
+                        <label class="lbl">Zpráva</label>
+                        <textarea class="inp" placeholder="Zde nám můžeš zanechat zprávu" rows="8"></textarea>
+                
+                
+                        <button type="submit" class="btn">Odeslat</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="container-column">
+                    <p>Zde nám můžete zanechat zprávu a my se vám co nejdříve ozveme. Máte-li jakýkoli dotaz nebo potřebujete pomoc, neváhejte nás kontaktovat. Rádi vám odpovíme na všechny vaše otázky a pomůžeme s objednávkami. Naše podpora je k dispozici pro všechny vaše potřeby. Těšíme se na vaši zprávu a naší snahou je poskytovat vám tu nejlepší službu.
+                        <br><br>
+                        <i class="fa fa-phone" aria-hidden="true"></i> +420 123 456 789<br>
+                        <i class="fa fa-envelope" aria-hidden="true"></i> podpora@rozvozjidla.cz<br>
+                    </p>
+            </div>
+
+            
+            
+        </div>
+    </section>
+
+
+
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page2">
+        <h1>Přihlášení</h1>
+        <p>Jsme rádi, že jste zpět a máte hlad.</p>
+    </section>
+
+
+
+
+
+
+
+    <section class="content-section">
+        <div class="container">
+        
+            <div class="container-column">
+            </div>
+
+            <div class="container-column">
+
+                <h2>Přihlášení</h2>
+                <hr>
+
+                <div class="form-container">
+                    <form>                       
+
+                        <label class="lbl">E-mail</label>
+                        <input class="inp" type="email" placeholder="Váš přihlasovací e-mail">
+                
+                        <label class="lbl">Heslo</label>
+                        <input class="inp" type="password" placeholder="Vaše přihlašovací heslo">
+                
+                        <button onclick="addAlert('Upozornění','Funkce není dostupná!')" class="btn">Přihlásit se</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="container-column">
+            </div>
+
+            
+            
+        </div>
+    </section>
+
+   
+
+{% endblock %}
