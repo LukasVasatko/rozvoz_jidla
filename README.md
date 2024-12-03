@@ -9,6 +9,7 @@ This project is a **food delivery web application** designed to allow users to:
 ## Technology Stack
 - **Frontend**: HTML5, CSS3, JavaScript 
 - **Backend**: Flask (Python), PHP
+- **Database**: SQLite
 
 ## Features
 1. **Client Interface**  
