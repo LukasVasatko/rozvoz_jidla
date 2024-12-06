@@ -23,23 +23,34 @@
 
                 <h2>Registrace</h2>
                 <hr>
-
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                  <ul>
+                    {% for category, message in messages %}
+                      <li style="color: white;" class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              {% endwith %}
                 <div class="form-container">
-                    <form>
+                    <form method="POST">
                         <label class="lbl">Jméno</label>
-                        <input class="inp" type="text" placeholder="Vaše jméno">
+                        <input class="inp" type="text" name="jmeno" placeholder="Vaše jméno">
             
                         <label class="lbl">Přijmení</label>
-                        <input class="inp" type="text" placeholder="Vaše přijmení">                        
+                        <input class="inp" type="text" name="prijmeni" placeholder="Vaše přijmení">                        
 
                         <label class="lbl">E-mail</label>
-                        <input class="inp" type="email" placeholder="Váš e-mail">
+                        <input class="inp" type="email" name="email" placeholder="Váš e-mail">
+
+                        <label class="lbl">Telefon</label>
+                        <input class="inp" type="tel" name="telefon" placeholder="Váš telefon">
                 
                         <label class="lbl">Heslo</label>
-                        <input class="inp" type="password" placeholder="Vaše heslo">
+                        <input class="inp" type="password" name="heslo" placeholder="Vaše heslo">
 
                         <label class="lbl">Heslo (znova)</label>
-                        <input class="inp" type="password" placeholder="Vaše heslo (znova)">
+                        <input class="inp" type="password" name="heslo_znova" placeholder="Vaše heslo (znova)">
 
                         <label class="lbl">Země</label>
                         <select class="sel" >
@@ -47,8 +58,10 @@
                             <option value="sk">Slovensko</option>
                         </select>
                 
-                        <button onclick="addAlert('Upozornění','Funkce není dostupná!')" class="btn">Odeslat</button>
+                        <button type="submit"  class="btn">Registrovat</button>
+                        <!-- <button onclick="addAlert('Upozornění','Funkce není dostupná!')" class="btn">Odeslat</button> !-->
                     </form>
+                    <a href="{{ url_for('prihlaseni') }}">Máte účet? Přihlaste se!</a>
                 </div>
             </div>
 
