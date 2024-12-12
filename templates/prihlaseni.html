@@ -24,7 +24,7 @@
                 <hr>
 
                 <div class="form-container">
-                    <form>                       
+                    <form method="POST">                       
 
                         <label class="lbl">E-mail</label>
                         <input class="inp" type="email" placeholder="Váš přihlasovací e-mail">
@@ -32,8 +32,10 @@
                         <label class="lbl">Heslo</label>
                         <input class="inp" type="password" placeholder="Vaše přihlašovací heslo">
                 
-                        <button onclick="addAlert('Upozornění','Funkce není dostupná!')" class="btn">Přihlásit se</button>
+                        <button type="submit" class="btn">Přihlásit se</button>
+                        <!-- <button onclick="addAlert('Upozornění','Funkce není dostupná!')" class="btn">Přihlásit se</button> !-->
                     </form>
+		    <a href="{{ url_for('registrace') }}">Nemáte účet? Zaregistrujte se!</a>
                 </div>
             </div>
 

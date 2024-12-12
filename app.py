@@ -63,8 +63,30 @@ def registrace():
 
     return render_template('registrace.html', msgs=get_flashed_messages(with_categories=True))
 
-@app.route('/prihlaseni')
+@app.route('/prihlaseni', methods=['GET', 'POST'])
 def prihlaseni():
+    if request.method == 'POST':
+        email = request.form['email']
+        heslo = request.form['heslo']
+
+        conn = get_db_connection()
+        user = conn.execute("SELECT * FROM uzivatele WHERE email = ?", (email,)).fetchone()
+        conn.close()
+
+        if user is None:
+            flash('Tento e-mail není registrován.', 'error')
+            return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
+
+        if not check_password_hash(user['heslo'], heslo):
+            flash('Nesprávné heslo.', 'error')
+            return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
+
+        # Přihlášení úspěšné
+        session['user_id'] = user['id']
+        session['user_role'] = user['role']
+        flash('Přihlášení bylo úspěšné!', 'success')
+        return redirect(url_for('domu'))
+
     return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True)) 
 
 @app.route('/restaurace')
