@@ -23,7 +23,7 @@ def get_db_connection():
 
 @app.route('/')
 def home1():
-    return redirect(url_for('domu'), msgs=get_flashed_messages(with_categories=True))
+    return redirect(url_for('domu'))
 
 @app.route('/domu')
 def domu():
@@ -41,7 +41,7 @@ def registrace():
         role = 'Uzivatel'
 
         if heslo != heslo_znova:
-            flash('Hesla se neshodují. Zkuste to znovu.', 'error')
+            flash('Hesla se neshodují. Zkuste to znovu.', 'Chyba')
             return render_template('registrace.html', msgs=get_flashed_messages(with_categories=True))
 
         hashed_password = generate_password_hash(heslo)
@@ -56,38 +56,58 @@ def registrace():
             flash('Registrace byla úspěšná! Můžete se přihlásit.', 'success')
             return render_template('registrace.html', msgs=get_flashed_messages(with_categories=True))
         except sqlite3.IntegrityError:
-            flash('E-mail je již registrován. Zkuste jiný e-mail.', 'error')
+            flash('E-mail je již registrován. Zkuste jiný e-mail.', 'Chyba')
             return render_template('registrace.html', msgs=get_flashed_messages(with_categories=True))
         finally:
             conn.close()
 
     return render_template('registrace.html', msgs=get_flashed_messages(with_categories=True))
 
+@app.route('/odhlaseni')
+def odhlaseni():
+    session.pop('user_id', None)
+    session.pop('user_email', None)
+    flash('Byli jste úspěšně odhlášeni.', 'Úspěch')
+    return redirect(url_for('prihlaseni'))
+
 @app.route('/prihlaseni', methods=['GET', 'POST'])
 def prihlaseni():
     if request.method == 'POST':
         email = request.form['email']
         heslo = request.form['heslo']
+        print(email)
 
         conn = get_db_connection()
-        user = conn.execute("SELECT * FROM uzivatele WHERE email = ?", (email,)).fetchone()
-        conn.close()
+        conn.row_factory = sqlite3.Row
+        user = conn.execute("SELECT * FROM uzivatele WHERE email = ? LIMIT 1", (email,)).fetchone()
 
         if user is None:
-            flash('Tento e-mail není registrován.', 'error')
+            flash('Tento e-mail není registrován.', 'Chyba')
             return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
 
-        if not check_password_hash(user['heslo'], heslo):
-            flash('Nesprávné heslo.', 'error')
+        if not check_password_hash(user[5], heslo):
+            flash('Nesprávné heslo.', 'Chyba')
             return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
 
-        # Přihlášení úspěšné
-        session['user_id'] = user['id']
-        session['user_role'] = user['role']
-        flash('Přihlášení bylo úspěšné!', 'success')
-        return redirect(url_for('domu'))
+        try:
+            session['user_id'] = user[0]
+            session['user_role'] = user[6]
+            session['user_cele_jmeno'] = user[1] + ' ' + user[2]
 
-    return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True)) 
+
+            flash('Přihlášení bylo úspěšné!', 'Úspěch')
+            conn.close()
+            return redirect(url_for('domu'))
+        except Exception as e:
+            flash(f'Neznámá chyba: {str(e)}', 'Chyba')
+            conn.close()
+            return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
+
+        finally:
+            conn.close()
+
+    return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
+
 
 @app.route('/restaurace')
 def restaurace():

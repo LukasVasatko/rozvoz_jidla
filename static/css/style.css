@@ -823,14 +823,66 @@ RESTAURANTS
 
     .filter-panel {
         flex: none;
-        max-width: 100%; /* Filtr bude mít 100% šířku na mobilu */
+        max-width: 100%;
         border-right: none;
-        border-bottom: 1px solid #ccc; /* Přidá spodní okraj místo pravého */
+        border-bottom: 1px solid #ccc;
         padding-right: 0;
-        margin-bottom: 20px; /* Přidá mezírku mezi filtrem a obsahem */
+        margin-bottom: 20px;
     }
 
     .restaurant-list {
-        grid-template-columns: 1fr; /* Jedna restaurace na řádek */
+        grid-template-columns: 1fr;
     }
 }
+
+
+
+
+
+.user-icon {
+    border-radius: 50%;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.user-name {
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.user-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.user-menu:hover .user-dropdown {
+    display: block;
+}
+
+.user-dropdown a {
+    padding: 10px;
+    display: block;
+    text-decoration: none;
+    color: #333;
+}
+
+.user-dropdown a:hover {
+    background-color: #f1f1f1;
+}
+
+@media (max-width: 768px) {
+
+    .user-menu {
+        align-self: left;
+    }
+
+}
+
+
+

@@ -9,18 +9,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>rozvozJidla.cz</title>
 
-    <script>
-        var alerts = {{ msgs|tojson }};
-        alerts.forEach(([category, message]) => {
-            addAlert(category, message);
-        });
-    </script>
+
 
 </head>
 <body>
 
     <div id="alertContainer"></div>
     
+
+    <script>
+        var alerts = {{ msgs|tojson|safe }};
+        alerts.forEach(([category, message]) => {
+            addAlert(category, message);
+        });
+    </script>
 
 <nav>
     <ul>
@@ -37,15 +39,25 @@
             <li><a href="/restaurace">Restaurace</a></li>
             <li><a href="#onas">O nás</a></li>
             <li><a href="#kontakt">Kontakt</a></li>
+
+            {% if session.user_id %}
+            <li class="user-menu">
+                <span class="user-name">{{ session.user_cele_jmeno or 'Uživatel' }}</span>
+                <i class="fa fa-arrow-circle-down" aria-hidden="true"></i>
+                <div class="user-dropdown">
+                    <a href="/nastaveni">Nastavení</a>
+                    <a href="/odhlaseni">Odhlásit se</a>
+                </div>
+            </li>
+            <li></li>
+        {% else %}
             <li><button onclick="window.location.href='/registrace';" class="button">Registrace</button></li>
             <li><button onclick="window.location.href='/prihlaseni';" class="button button-outline">Přihlásit se</button></li>
-            <li></li>
-            <li></li>
-            </div>
+        {% endif %}
+        
         </div>
     </ul>
 </nav>
-
 
 <script>
 document.querySelector('.menu-mobile-icon').addEventListener('click', () => {
