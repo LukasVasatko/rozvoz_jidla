@@ -117,6 +117,10 @@ def restaurace():
 def sprava_restaurace():
     return render_template('sprava_restauraci.html', msgs=get_flashed_messages(with_categories=True))  
 
+@app.route('/sprava_uzivatelu')
+def sprava_uzivatelu():
+    return render_template('sprava_uzivatelu.html', msgs=get_flashed_messages(with_categories=True))  
+
 @app.errorhandler(404)
 def nenalezeno(e):
     return render_template('error404.html', msgs=get_flashed_messages(with_categories=True)), 404

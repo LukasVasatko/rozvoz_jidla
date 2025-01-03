@@ -1,0 +1,81 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page2">
+        <h1>Nabídka restaurací</h1>
+        <p>Vyberte si z naší široké nabídky restaurací</p>
+    </section>
+
+
+
+
+    <section class="content-section">
+
+        <input type="text" class="search-bar" placeholder="Vyhledat restauraci...">
+
+<section class="restaurant-content-section">
+    
+        <div class="filter-panel">
+            <div class="filter-section">
+                <h3>Podle hodnocení</h3>
+                <select class="filter-select">
+                    <option>Nejlépe hodnocené</option>
+                    <option>Zlatá střední cesta</option>
+                    <option>Nejhůře hodnocené</option>
+                </select>
+            </div>
+            <div class="filter-section">
+                <h3>Podle ceny</h3>
+                <select class="filter-select">
+                    <option>Nejdražší</option>
+                    <option>Nejlevnější</option>
+                </select>
+            </div>
+            <div class="filter-section">
+                <h3>Podle produktů</h3>
+                <div class="filter-checkbox">
+                    <label><input type="checkbox"> Pizza</label>
+                    <label><input type="checkbox"> Burger</label>
+                    <label><input type="checkbox"> Sushi</label>
+                    <label><input type="checkbox"> Těstoviny</label>
+                </div>
+            </div>
+            <div class="filter-section">
+                <h3>Podle typu restaurace</h3>
+                <div class="filter-checkbox">
+                    <label><input type="checkbox"> Cukrárna</label>
+                    <label><input type="checkbox"> Market</label>
+                    <label><input type="checkbox"> Fastfood</label>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <div class="restaurant-list">
+            <div class="restaurant">
+                <img src="{{ url_for('static', filename='images/sushi.jpg') }}">
+                <div class="restaurant-content">
+                    <h3 class="restaurant-title">Sushi</h3>
+                    <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> Sportovní 2a, 602 00 Brno-střed</h5>
+                    <a href="#" class="restaurant-button">Zobrazit</a>
+                </div>
+            </div>
+            <div class="restaurant">
+                <img src="{{ url_for('static', filename='images/burgerking.png') }}">
+                <div class="restaurant-content">
+                    <h3 class="restaurant-title">Burgers</h3>
+                    <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> Česká 142/29, 602 00 Brno-střed</h5>
+                    <a href="#" class="restaurant-button">Zobrazit</a>
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+
+</section>
+
+
+{% endblock %}
