@@ -113,6 +113,10 @@ def prihlaseni():
 def restaurace():
     return render_template('restaurace.html', msgs=get_flashed_messages(with_categories=True))    
 
+@app.route('/sprava_restauraci')
+def sprava_restaurace():
+    return render_template('sprava_restauraci.html', msgs=get_flashed_messages(with_categories=True))  
+
 @app.errorhandler(404)
 def nenalezeno(e):
     return render_template('error404.html', msgs=get_flashed_messages(with_categories=True)), 404
