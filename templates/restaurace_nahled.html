@@ -1,0 +1,56 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page2">
+        <h1>Nabídka restaurací</h1>
+        <p>Vyberte si z naší široké nabídky restaurací</p>
+    </section>
+
+
+
+
+    <section class="content-section">
+ 
+        <section class="restaurant-block-content-section">
+       
+            <input type="text" class="restaurant-block-search-bar" placeholder="Vyhledat jídlo v restaurci...">
+       
+            <section class="restaurant-block-content">
+               
+                <div class="restaurant-block-restaurant-list">
+                    <div class="restaurant-block-restaurant">
+                        <img src="images/pizza.jpg" alt="Sushi MORI">
+                        <div class="restaurant-block-restaurant-content">
+                            <h3 class="restaurant-block-restaurant-title">Pizza</h3>
+                            <h5 class="restaurant-block-restaurant-title2">199,00 Kč</h5>
+                            <a href="#" class="restaurant-block-restaurant-button"><i class="fa fa-shopping-cart" aria-hidden="true"></i> Do košíku</a>
+                            <a href="#" class="restaurant-block-restaurant-button2"><i class="fa fa-question-circle" aria-hidden="true"></i></a>
+                        </div>
+                    </div>
+                    <div class="restaurant-block-restaurant">
+                        <img src="images/burger.jpg" alt="Burger King Brno Česká">
+                        <div class="restaurant-block-restaurant-content">
+                            <h3 class="restaurant-block-restaurant-title">Bruger</h3>
+                            <h5 class="restaurant-block-restaurant-title2">199,00 Kč</h5>
+                            <a href="#" class="restaurant-block-restaurant-button"><i class="fa fa-shopping-cart" aria-hidden="true"></i> Do košíku</a>
+                            <a href="#" class="restaurant-block-restaurant-button2"><i class="fa fa-question-circle" aria-hidden="true"></i></a>
+                        </div>
+                    </div>
+                </div>
+       
+                <div class="restaurant-block-cart-panel">
+                    <h3>Náhled košíku</h3>
+                    <div class="restaurant-block-cart-items">
+                        Košík je prázdný, vyberte produkt.
+                    </div>
+                    <button class="restaurant-block-continue-button">Pokračovat</button>
+                </div>
+       
+            </section>
+        </section>
+       
+ 
+    </section>
+
+
+{% endblock %}
