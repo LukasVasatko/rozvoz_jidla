@@ -237,6 +237,62 @@ RESTAURANT MAIN MENU
     margin-bottom: 5px;
 }
 
+
+
+
+
+
+/*
+TABLES
+*/
+
+.modern-table {
+    width: 103%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modern-table thead {
+    background-color: var(--main-color);
+    color: white;
+    text-align: left;
+}
+
+.modern-table th, 
+.modern-table td {
+    padding: 15px;
+    border-bottom: 1px solid #dddddd;
+}
+
+
+
+.modern-table img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.table-button {
+    display: inline-block;
+    padding: 8px 12px;
+    color: white;
+    background-color: var(--main-color);
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.table-button:hover {
+    background-color: var(--main-color);
+}
+
+
+
+
 /*
 NAVIGATION
 */
