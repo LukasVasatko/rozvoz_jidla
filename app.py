@@ -38,7 +38,7 @@ def registrace():
         telefon = request.form['telefon']
         heslo = request.form['heslo']
         heslo_znova = request.form['heslo_znova']
-        role = 'Uzivatel'
+        role = 'Uživatel'
 
         if heslo != heslo_znova:
             flash('Hesla se neshodují. Zkuste to znovu.', 'Chyba')
@@ -117,9 +117,43 @@ def restaurace():
 def sprava_restaurace():
     return render_template('sprava_restauraci.html', msgs=get_flashed_messages(with_categories=True))  
 
-@app.route('/sprava_uzivatelu')
+@app.route('/sprava_uzivatelu', methods=['GET', 'POST'])
 def sprava_uzivatelu():
-    return render_template('sprava_uzivatelu.html', msgs=get_flashed_messages(with_categories=True))  
+    if session.get('user_role') != 'Administrátor':
+        flash('Přístup zamítnut!', 'Chyba')
+        return render_template('index.html', msgs=get_flashed_messages(with_categories=True))
+
+    search_query = request.form.get('search', '').strip()
+    conn = get_db_connection()
+
+    if search_query:
+        query = "SELECT * FROM uzivatele WHERE jmeno LIKE ? OR email LIKE ?"
+        users = conn.execute(query, (f"%{search_query}%", f"%{search_query}%")).fetchall()
+    else:
+        users = conn.execute("SELECT * FROM uzivatele").fetchall()
+
+    conn.close()
+    return render_template('sprava_uzivatelu.html', uzivatele=users, search_query=search_query, msgs=get_flashed_messages(with_categories=True))
+
+@app.route('/smazat_uzivatele/<int:user_id>', methods=['GET'])
+def smazat_uzivatele(user_id):
+    if session.get('user_role') != 'Administrátor':
+        flash('Přístup zamítnut!', 'Chyba')
+        return redirect('/sprava_uzivatelu')
+
+    conn = get_db_connection()
+    user = conn.execute("SELECT * FROM uzivatele WHERE id_uzivatele = ?", (user_id,)).fetchone()
+
+    if not user:
+        flash('Uživatel nenalezen!', 'Chyba')
+    else:
+        conn.execute("DELETE FROM uzivatele WHERE id_uzivatele = ?", (user_id,))
+        conn.commit()
+        flash(f'Uživatel {user["jmeno"]} {user["prijmeni"]} byl úspěšně smazán!', 'Úspěch')
+
+    conn.close()
+    return redirect('/sprava_uzivatelu')
+
 
 @app.errorhandler(404)
 def nenalezeno(e):
