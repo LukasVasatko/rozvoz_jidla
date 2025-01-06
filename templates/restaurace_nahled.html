@@ -2,8 +2,8 @@
 
 {% block contentmain %}
     <section class="welcome-page2">
-        <h1>Nabídka restaurací</h1>
-        <p>Vyberte si z naší široké nabídky restaurací</p>
+        <h1>{{ restaurace_promenna.nazev }}</h1>
+        <p>{{ restaurace_promenna.popis }}</p>
     </section>
 
 
@@ -47,7 +47,7 @@
                                 <li>{{ produkt['nazev'] }} - {{ produkt['cena'] }} Kč</li>
                                 {% endfor %}
                             </ul>
-                            <p>Celková cena: {{ sum([p['cena'] for p in session['kosik']]) }} Kč</p>
+                            <p>Celková cena: sum([p['cena'] for p in session['kosik']])  Kč</p>
                         {% else %}
                             <p>Košík je prázdný, vyberte produkt.</p>
                         {% endif %}
