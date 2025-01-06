@@ -66,13 +66,34 @@
                         <button type="submit" class="btn">Změnit</button>
                     </form>
                 </div>
-
+                    <br> <br>
                 <h1>Adresy</h1>
-                <p>Zde se zobrazují všechny vaše adresy. Pokud chcete přidat adresu <a href="/pridat_adresu2">klikněte zde</a>.</p>
 
+                {% if info == 'pridat': %}
+                <p>Přidejte adresu ve formátu ULICE Č.P PSČ MĚSTO. Pokud chcete zpět na seznam adres <a href="/nastaveni">klikněte zde</a>.</p>
+
+                <div class="form-container">
+                    <form method="post" action="/pridat_adresu">
+                        <label class="lbl">Název adresy (slouží pouze pro vás)</label>
+                        <input class="inp" type="text" name="nazev" placeholder="Název. např. Domov">
+                        <label class="lbl">Ulice</label>
+                        <input class="inp" type="text" name="ulice" placeholder="Ulice">
+                        <label class="lbl">Číslo popisné</label>
+                        <input class="inp" type="text" name="cp" placeholder="Číslo popisné">
+                        <label class="lbl">PSČ</label>
+                        <input class="inp" type="text" name="psc" placeholder="PSČ">
+                        <label class="lbl">Město</label>
+                        <input class="inp" type="text" name="mesto" placeholder="Město">
+                        <button type="submit" class="btn">Přidat</button>
+                    </form>
+                </div>
+
+                {% else %}
+                <p>Zde se zobrazují všechny vaše adresy. Pokud chcete přidat adresu <a href="/nastaveni/pridat">klikněte zde</a>.</p>
                 <table class="modern-table" style="width: 100%;">
                     <thead>
                         <tr>
+                            <th></th>
                             <th>Název</th>
                             <th>Ulice</th>
                             <th>č.p</th>
@@ -82,23 +103,32 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for restaurace in restaurace %}
+                        {% for adresa in adresy %}
                         <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
+                            <th>{% if adresa['hlavni_adresa'] %}<i class="fa fa-home" aria-hidden="true"></i>{% endif %} </th>
+                            <td>{{ adresa.nazev_adresy }}</td>
+                            <td>{{ adresa.adresa_ulice }}</td>
+                            <td>{{ adresa.adresa_cislo_domu }}</td>
+                            <td>{{ adresa.adresa_psc }}</td>
+                            <td>{{ adresa.adresa_mesto }}</td>
                             <td>
-                                <a href="/smazat_adresu/{{ adresa.id_adresy }}" class="table-button">Smazat</a>
+                                <a href="/smazat_adresu/{{ adresa.id_adresy }}" class="table-button"><i class="fa fa-trash" aria-hidden="true"></i> Smazat</a>
+                                {% if not adresa['hlavni_adresa'] %}
+                                <a href="/nastavit_hlavni/{{ adresa.id_adresy }}" class="table-button"><i class="fa fa-home" aria-hidden="true"></i></a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                {% if not restaurace %}
-                    <p>Žádné restaurace nejsou k dispozici.</p>
+                {% if not adresy %}
+                    <p>Žádné adresy nejsou k dispozici.</p>
                 {% endif %}
+
+                {% endif %}
+                
+
+             
                 
 
             </div>

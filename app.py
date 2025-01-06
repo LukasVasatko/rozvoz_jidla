@@ -378,9 +378,176 @@ def prihlaseni():
 
     return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
 
-@app.route('/nastaveni')
-def nastaveni():
-    return render_template('nastaveni.html', msgs=get_flashed_messages(with_categories=True), get_user_by_id=get_user_by_id)   
+@app.route('/nastaveni/', defaults={'info': ''})
+@app.route('/nastaveni/<string:info>')
+def nastaveni(info):
+    conn = get_db_connection()
+    adresy = conn.execute("SELECT * FROM adresy_uzivatele WHERE id_uzivatele = ?", (session.get('user_id'),)).fetchall()
+    objednavky = conn.execute("SELECT * FROM objednavky WHERE id_uzivatele = ?", (session.get('user_id'),)).fetchall()
+    return render_template('nastaveni.html', msgs=get_flashed_messages(with_categories=True), get_user_by_id=get_user_by_id, adresy=adresy, objednavky=objednavky, info=info)   
+
+@app.route('/zmena_hesla', methods=['POST'])
+def zmena_hesla():
+    if 'user_id' not in session:
+        flash('Musíte být přihlášeni, abyste mohli změnit heslo.', 'Chyba')
+        return redirect(url_for('prihlaseni'))
+
+    stare_heslo = request.form['heslo']
+    nove_heslo = request.form['heslo_nove']
+
+    if not stare_heslo or not nove_heslo:
+        flash('Všechna pole jsou povinná.', 'Chyba')
+        return redirect(url_for('nastaveni'))
+
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM uzivatele WHERE id_uzivatele = ?', (session['user_id'],)).fetchone()
+
+    if not user:
+        conn.close()
+        flash('Uživatel nebyl nalezen.', 'Chyba')
+        return redirect(url_for('prihlaseni'))
+
+    if not check_password_hash(user['heslo'], stare_heslo):
+        conn.close()
+        flash('Staré heslo není správné.', 'Chyba')
+        return redirect(url_for('nastaveni'))
+
+    nove_heslo_hash = generate_password_hash(nove_heslo)
+    conn.execute('UPDATE uzivatele SET heslo = ? WHERE id_uzivatele = ?', (nove_heslo_hash, session['user_id']))
+    conn.commit()
+    conn.close()
+
+    flash('Heslo bylo úspěšně změněno.', 'Úspěch')
+    return redirect(url_for('nastaveni'))
+
+@app.route('/pridat_adresu', methods=['GET', 'POST'])
+def pridat_adresu():
+    if 'user_id' not in session:
+        flash('Musíte být přihlášeni, abyste mohli přidat adresu.', 'Chyba')
+        return redirect(url_for('prihlaseni'))
+
+    if request.method == 'POST':
+        nazev = request.form['nazev']
+        ulice = request.form['ulice']
+        cp = request.form['cp']
+        psc = request.form['psc']
+        mesto = request.form['mesto']
+
+        if not ulice or not cp or not psc or not mesto:
+            flash('Všechna pole jsou povinná.', 'Chyba')
+        else:
+            conn = get_db_connection()
+            existujici_adresy = conn.execute(
+                'SELECT COUNT(*) FROM adresy_uzivatele WHERE id_uzivatele = ?',
+                (session['user_id'],)
+            ).fetchone()[0]
+
+            hlavni_adresa = 1 if existujici_adresy == 0 else 0
+
+            conn.execute('''
+                INSERT INTO adresy_uzivatele (id_uzivatele, nazev_adresy, adresa_ulice, adresa_cislo_domu, adresa_psc, adresa_mesto, hlavni_adresa)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (session['user_id'], nazev, ulice, cp, psc, mesto, hlavni_adresa))
+            conn.commit()
+            conn.close()
+
+            flash('Adresa byla úspěšně přidána.', 'Úspěch')
+            return redirect(url_for('nastaveni'))
+
+    return render_template('nastaveni.html', user=user, msgs=get_flashed_messages(with_categories=True), get_user_by_id=get_user_by_id)
+
+@app.route('/nastavit_hlavni/<int:id_adresy>', methods=['GET'])
+def nastavit_hlavni_adresu(id_adresy):
+    if 'user_id' not in session:
+        flash('Musíte být přihlášeni, abyste mohli nastavit hlavní adresu.', 'Chyba')
+        return redirect(url_for('prihlaseni'))
+
+    conn = get_db_connection()
+    adresa = conn.execute(
+        'SELECT * FROM adresy_uzivatele WHERE id_adresy = ? AND id_uzivatele = ?',
+        (id_adresy, session['user_id'])
+    ).fetchone()
+
+    if not adresa:
+        conn.close()
+        flash('Adresa nebyla nalezena nebo nepatří tomuto uživateli.', 'Chyba')
+        return redirect(url_for('nastaveni'))
+
+    conn.execute(
+        'UPDATE adresy_uzivatele SET hlavni_adresa = 0 WHERE id_uzivatele = ?',
+        (session['user_id'],)
+    )
+    conn.execute(
+        'UPDATE adresy_uzivatele SET hlavni_adresa = 1 WHERE id_adresy = ?',
+        (id_adresy,)
+    )
+    conn.commit()
+    conn.close()
+
+    flash('Hlavní adresa byla úspěšně nastavena.', 'Úspěch')
+    return redirect(url_for('nastaveni'))
+
+
+
+@app.route('/smazat_adresu/<int:id_adresy>', methods=['GET'])
+def smazat_adresu(id_adresy):
+    if 'user_id' not in session:
+        flash('Musíte být přihlášeni, abyste mohli mazat adresy.', 'Chyba')
+        return redirect(url_for('prihlaseni'))
+
+    conn = get_db_connection()
+    adresa = conn.execute('SELECT * FROM adresy_uzivatele WHERE id_adresy = ? AND id_uzivatele = ?', 
+                          (id_adresy, session['user_id'])).fetchone()
+
+    if not adresa:
+        conn.close()
+        flash('Adresa nebyla nalezena nebo nepatří tomuto uživateli.', 'Chyba')
+        return redirect(url_for('nastaveni'))
+
+    conn.execute('DELETE FROM adresy_uzivatele WHERE id_adresy = ?', (id_adresy,))
+    conn.commit()
+    conn.close()
+
+    flash('Adresa byla úspěšně smazána.', 'Úspěch')
+    return redirect(url_for('nastaveni'))
+
+
+@app.route('/zmena_udaju', methods=['GET', 'POST'])
+def zmena_udaju():
+    if 'user_id' not in session:
+        flash('Musíte být přihlášeni, abyste mohli změnit své údaje.', 'Chyba')
+        return redirect(url_for('prihlaseni'))
+
+    user_id = session['user_id']
+    user = get_user_by_id(user_id)
+
+    if not user:
+        flash('Uživatel nenalezen!', 'Chyba')
+        return redirect(url_for('prihlaseni'))
+
+    if request.method == 'POST':
+        jmeno = request.form['jmeno']
+        prijmeni = request.form['prijmeni']
+        email = request.form['email']
+        telefon = request.form['telefon']
+
+        if not jmeno or not prijmeni or not email or not telefon:
+            flash('Všechna pole jsou povinná.', 'Chyba')
+        else:
+            conn = get_db_connection()
+            conn.execute('''
+                UPDATE uzivatele
+                SET jmeno = ?, prijmeni = ?, email = ?, telefon = ?
+                WHERE id_uzivatele = ?
+            ''', (jmeno, prijmeni, email, telefon, user_id))
+            conn.commit()
+            conn.close()
+
+            flash('Údaje byly úspěšně změněny.', 'Úspěch')
+            return redirect(url_for('nastaveni'))
+
+    return render_template('nastaveni.html', user=user, msgs=get_flashed_messages(with_categories=True), get_user_by_id=get_user_by_id)
+
 
 # Nutná oprava - kód z teams
 @app.route('/restaurace')
@@ -412,12 +579,13 @@ def pridat_do_kosiku():
         'restaurace_id': restaurace_id
     })
     session.modified = True
-    flash('Produkt přidán do košíku.', 'success')
+    flash('Produkt přidán do košíku.', 'Úspěch')
     return redirect(request.referrer)
+
 @app.route('/odeslat_objednavku', methods=['POST'])
 def odeslat_objednavku():
     if 'kosik' not in session or not session['kosik']:
-        flash('Košík je prázdný.', 'error')
+        flash('Košík je prázdný.', 'Chyba')
         return redirect(url_for('restaurant_page'))
     poznamka = request.form.get('poznamka', '')
     kosik = session['kosik']
@@ -436,7 +604,7 @@ def odeslat_objednavku():
     conn.commit()
     conn.close()
     session.pop('kosik', None)
-    flash('Objednávka byla úspěšně odeslána.', 'success')
+    flash('Objednávka byla úspěšně odeslána.', 'Úspěch')
     return redirect(url_for('restaurant_page'))    
 
 

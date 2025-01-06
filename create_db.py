@@ -19,12 +19,14 @@ CREATE TABLE uzivatele (
 c.execute("""
 CREATE TABLE adresy_uzivatele (
     id_adresy INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_uzivatele INTEGER,
     nazev_adresy TEXT NOT NULL,
     adresa_ulice TEXT NOT NULL,
     adresa_cislo_domu TEXT NOT NULL,
     adresa_psc TEXT NOT NULL,
     adresa_mesto TEXT NOT NULL,
-    hlavni_adresa BOOLEAN DEFAULT 0
+    hlavni_adresa BOOLEAN DEFAULT 0,
+    FOREIGN KEY (id_uzivatele) REFERENCES uzivatele(id_uzivatele)
 );
 """)
 
@@ -71,10 +73,12 @@ CREATE TABLE nabidka_produktu (
 c.execute("""
 CREATE TABLE objednavky (
     id_objednavky INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_uzivatele INTEGER,
     datum_vytvoreni DATETIME DEFAULT CURRENT_TIMESTAMP,
     poznamka_pro_kurýra TEXT,
     jídlo_pripraveno BOOLEAN DEFAULT 0,
-    doruceno BOOLEAN DEFAULT 0
+    doruceno BOOLEAN DEFAULT 0,
+    FOREIGN KEY (id_uzivatele) REFERENCES uzivatele(id_uzivatele)
 );
 """)
 
