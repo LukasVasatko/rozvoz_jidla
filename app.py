@@ -281,10 +281,60 @@ def prihlaseni():
 
     return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
 
-
+# Nutná oprava - kód z teams
 @app.route('/restaurace')
-def restaurace():
+def restaurace2():
     return render_template('restaurace.html', msgs=get_flashed_messages(with_categories=True))    
+
+@app.route('/restaurace/<int:restaurace_id>', methods=['GET'])
+def restaurace_nahled(restaurace_id):
+    conn = get_db_connection()
+    restaurace = conn.execute("SELECT * FROM restaurace",(restaurace_id)).fetchone()
+    produkty = conn.execute("SELECT * FROM produkty",(restaurace_id)).fetchall()
+    
+    return render_template('restaurace_nahled.html', restaurace_promenna=restaurace, produkty_promenna=produkty)
+
+@app.route('/pridat_do_kosiku', methods=['POST'])
+def pridat_do_kosiku():
+    produkt_id = request.form['produkt_id']
+    nazev = request.form['produkt_nazev']
+    cena = float(request.form['produkt_cena'])
+    restaurace_id = request.form['restaurace_id']
+    if 'kosik' not in session:
+        session['kosik'] = []
+    session['kosik'].append({
+        'id': produkt_id,
+        'nazev': nazev,
+        'cena': cena,
+        'restaurace_id': restaurace_id
+    })
+    session.modified = True
+    flash('Produkt přidán do košíku.', 'success')
+    return redirect(request.referrer)
+@app.route('/odeslat_objednavku', methods=['POST'])
+def odeslat_objednavku():
+    if 'kosik' not in session or not session['kosik']:
+        flash('Košík je prázdný.', 'error')
+        return redirect(url_for('restaurant_page'))
+    poznamka = request.form.get('poznamka', '')
+    kosik = session['kosik']
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO objednavky (poznamka, celkova_cena)
+        VALUES (?, ?)
+    """, (poznamka, sum([p['cena'] for p in kosik])))
+    objednavka_id = cursor.lastrowid
+    for produkt in kosik:
+        cursor.execute("""
+            INSERT INTO polozky_objednavky (id_objednavky, id_produktu, cena)
+            VALUES (?, ?, ?)
+        """, (objednavka_id, produkt['id'], produkt['cena']))
+    conn.commit()
+    conn.close()
+    session.pop('kosik', None)
+    flash('Objednávka byla úspěšně odeslána.', 'success')
+    return redirect(url_for('restaurant_page'))    
 
 
 @app.route('/sprava_uzivatelu', methods=['GET', 'POST'])
