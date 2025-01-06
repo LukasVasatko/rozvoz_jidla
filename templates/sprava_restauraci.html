@@ -2,78 +2,119 @@
 
 {% block contentmain %}
     <section class="welcome-page2">
-        <h1>Nabídka restaurací</h1>
-        <p>Vyberte si z naší široké nabídky restaurací</p>
+        <h1>Správa restaurací</h1>
+        <p>Zde můžete spravovat restaurace</p>
     </section>
 
 
+   
 
 
     <section class="content-section">
-
-        <input type="text" class="search-bar" placeholder="Vyhledat restauraci...">
-
-<section class="restaurant-content-section">
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const menuLinks = document.querySelectorAll(".menu a");
+                const contentSections = document.querySelectorAll(".content > div");
     
-        <div class="filter-panel">
-            <div class="filter-section">
-                <h3>Podle hodnocení</h3>
-                <select class="filter-select">
-                    <option>Nejlépe hodnocené</option>
-                    <option>Zlatá střední cesta</option>
-                    <option>Nejhůře hodnocené</option>
-                </select>
-            </div>
-            <div class="filter-section">
-                <h3>Podle ceny</h3>
-                <select class="filter-select">
-                    <option>Nejdražší</option>
-                    <option>Nejlevnější</option>
-                </select>
-            </div>
-            <div class="filter-section">
-                <h3>Podle produktů</h3>
-                <div class="filter-checkbox">
-                    <label><input type="checkbox"> Pizza</label>
-                    <label><input type="checkbox"> Burger</label>
-                    <label><input type="checkbox"> Sushi</label>
-                    <label><input type="checkbox"> Těstoviny</label>
-                </div>
-            </div>
-            <div class="filter-section">
-                <h3>Podle typu restaurace</h3>
-                <div class="filter-checkbox">
-                    <label><input type="checkbox"> Cukrárna</label>
-                    <label><input type="checkbox"> Market</label>
-                    <label><input type="checkbox"> Fastfood</label>
-                </div>
-            </div>
+                menuLinks.forEach((link, idx) => {
+                    link.addEventListener("click", (e) => {
+                        e.preventDefault();
+    
+                        menuLinks.forEach(menuLink => menuLink.classList.remove("active"));
+                        contentSections.forEach(section => section.style.display = "none");
+    
+                        link.classList.add("active");
+                        contentSections[idx].style.display = "block";
+                    });
+                });
+    
+                contentSections.forEach((section, idx) => {
+                    section.style.display = idx === 0 ? "block" : "none";
+                });
+            });
+        </script>
+    </head>
+    <body>
+    
+    <div class="box-manage">
+        <div class="menu">
+            <a href="#" class="active">Restaurace</a>
+            <a href="#">Nová restaurace</a>
         </div>
+        <div class="content">
+            <div>
+                <h1>Restaurace</h1>
+                <p>Zde se zobrazují všechny restaurace dostupné pro vás.</p>
 
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Název</th>
+                            <th>Adresa</th>
+                            <th>Správce</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for restaurace in restaurace %}
+                        <tr>
+                            <td>{{ restaurace.nazev }}</td>
+                            <td>
+                                {{ restaurace.adresa_ulice }} {{ restaurace.adresa_cislo_domu }}, {{ restaurace.adresa_psc }} {{ restaurace.adresa_mesto }}
+                            </td>
+                            <td>{{ get_user_by_id(restaurace.id_spravce).jmeno }} {{ get_user_by_id(restaurace.id_spravce).prijmeni }}</td>
+                            <td>
+                                <a href="{{ url_for('sprava_restaurace', restaurace_id=restaurace.id_restaurace) }}" class="table-button">Správa</a>
+                                <a href="/smazat_restauraci/{{ restaurace.id_restaurace }}" class="table-button">Smazat</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not restaurace %}
+                    <p>Žádné restaurace nejsou k dispozici.</p>
+                {% endif %}
+                
 
-
-
-        <div class="restaurant-list">
-            <div class="restaurant">
-                <img src="{{ url_for('static', filename='images/sushi.jpg') }}">
-                <div class="restaurant-content">
-                    <h3 class="restaurant-title">Sushi</h3>
-                    <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> Sportovní 2a, 602 00 Brno-střed</h5>
-                    <a href="#" class="restaurant-button">Zobrazit</a>
-                </div>
             </div>
-            <div class="restaurant">
-                <img src="{{ url_for('static', filename='images/burgerking.png') }}">
-                <div class="restaurant-content">
-                    <h3 class="restaurant-title">Burgers</h3>
-                    <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> Česká 142/29, 602 00 Brno-střed</h5>
-                    <a href="#" class="restaurant-button">Zobrazit</a>
-                </div>
-            </div>
 
+            <div class="hidden">
+                <h1>Nová restaurace</h1>
+                <p>Zde můžete vytvořit novou restauraci.</p>
+
+                <div class="form-container">
+                    <form method="post" action="/pridat_restauraci">
+                        <label class="lbl">Název restaurace</label>
+                        <input class="inp" type="text" placeholder="Název této restaurace" id="nazev" name="nazev" required>
+                
+                        <label class="lbl">Adresa restaurace</label>
+                        <input class="inp" type="text" placeholder="Adresa této restaurace (Ulice Číslo PSČ Město)" id="adresa" name="adresa" required>
+                
+                        <label class="lbl">Telefon</label>
+                        <input class="inp" type="phone" placeholder="Telefonní číslo této restaurace" id="telefon" name="telefon" required>
+
+                        <label class="lbl">E-Mail</label>
+                        <input class="inp" type="email" placeholder="E-Mail této restaurace" id="email" name="email" required>
+
+                        <label class="lbl">Baner restaurace (url)</label>
+                        <input class="inp" type="text" placeholder="Baner této restaurace" id="url" name="url" required>
+
+                        <label class="lbl">Popis restaurace</label>
+                        <textarea class="inp" placeholder="Nějaké informace o této restauraci" rows="8" id="popis" name="popis" required></textarea>
+                
+                
+                        <button type="submit" class="btn">Vytvořit</button>
+                    </form>
+                </div>
+ 
+
+            </div>
+            
+            
+          
         </div>
-
-    </section>
+    </div>
 
 </section>
 

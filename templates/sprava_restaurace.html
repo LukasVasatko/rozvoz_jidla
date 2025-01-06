@@ -1,0 +1,206 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page2">
+        <h1>Správa restaurací</h1>
+        <p>Zde můžete spravovat restaurace</p>
+    </section>
+
+
+   
+
+
+    <section class="content-section">
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const menuLinks = document.querySelectorAll(".menu a");
+                const contentSections = document.querySelectorAll(".content > div");
+    
+                menuLinks.forEach((link, idx) => {
+                    link.addEventListener("click", (e) => {
+                        e.preventDefault();
+    
+                        menuLinks.forEach(menuLink => menuLink.classList.remove("active"));
+                        contentSections.forEach(section => section.style.display = "none");
+    
+                        link.classList.add("active");
+                        contentSections[idx].style.display = "block";
+                    });
+                });
+    
+                contentSections.forEach((section, idx) => {
+                    section.style.display = idx === 0 ? "block" : "none";
+                });
+            });
+        </script>
+    </head>
+    <body>
+    
+    <div class="box-manage">
+        <div class="menu">
+            <a href="#" class="active">Správa restaurace</a>
+            <a href="#">Produkty</a>
+            <a href="#">Objednávky</a>
+            <a href="#">Historie objednávek</a>
+            <a href="#">Příjmy</a>
+        </div>
+        <div class="content">
+            <div>
+                <h1>Správa restaurace</h1>
+                <p>Zde můžete spravovat různé části této restaurace.</p>
+
+                <div class="form-container">
+                    <form method="post" action="/upravit_restauraci/{{ restaurace.id_restaurace }}">
+                        <label class="lbl">Název restaurace</label>
+                        <input class="inp" type="text" placeholder="Název této restaurace" id="nazev" name="nazev" value="{{ restaurace.nazev }}" required>
+                
+                        <label class="lbl">Adresa restaurace</label>
+                        <input class="inp" type="text" placeholder="Adresa této restaurace (Ulice Číslo PSČ Město)" id="adresa" name="adresa" value="{{ restaurace.adresa_ulice }} {{ restaurace.adresa_cislo_domu }} {{ restaurace.adresa_psc }} {{ restaurace.adresa_mesto }}" required>
+                
+                        <label class="lbl">Telefon</label>
+                        <input class="inp" type="phone" placeholder="Telefonní číslo této restaurace" id="telefon" name="telefon" value="{{ restaurace.telefon }}" required>
+
+                        <label class="lbl">E-Mail</label>
+                        <input class="inp" type="email" placeholder="E-Mail této restaurace" id="email" name="email" value="{{ restaurace.email }}" required>
+
+                        <label class="lbl">Baner restaurace (url)</label>
+                        <input class="inp" type="text" placeholder="Baner této restaurace" id="url" name="url" value="{{ restaurace.image_url }}" required>
+
+                        <label class="lbl">Popis restaurace</label>
+                        <textarea class="inp" placeholder="Nějaké informace o této restauraci" rows="8" id="popis" name="popis" required>{{ restaurace.popis }}</textarea>
+                
+                
+                        <button type="submit" class="btn">Uložit</button>
+                    </form>
+                </div>
+ 
+
+            </div>
+            <div class="hidden">
+                <h1>Produkty</h1>
+                <p>Zde se zobrazují produkty a jejich podrobnosti.</p>
+
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Název</th>
+                            <th>Cena</th>
+                            <th>Popis</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+      
+                        <tr>
+                            <td>1</td>
+                            <td>Pizza</td>
+                            <td>280,-Kč</td>
+                            <td>Lahodná pizza z naší restaurace.</td>
+                            <td><a href="/produkt_uprava/" class="table-button"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Upravit</a> <a href="/storno_objednavky/" class="table-button"><i class="fa fa-trash" aria-hidden="true"></i> Smazat</a></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+                
+
+            </div>
+            <div class="hidden">
+                <h1>Objednávky</h1>
+                <p>Zde se zobrazují aktivní objednávky a jejich podrobnosti.</p>
+
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Celé Jméno</th>
+                            <th>Datum</th>
+                            <th>Položky</th>
+                            <th>Status</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+      
+                        <tr>
+                            <td>02938</td>
+                            <td>Adam Novák</td>
+                            <td>1.1.1990</td>
+                            <td>1x pizza, 1x burger</td>
+                            <td>Připravujeme</td>
+                            <td><a href="/pripraveni_objednavky/" class="table-button"><i class="fa fa-check-square-o" aria-hidden="true"></i> Připraveno</a> <a href="/storno_objednavky/" class="table-button"><i class="fa fa-ban" aria-hidden="true"></i> Storno</a></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+                
+
+            </div>
+            <div class="hidden">
+                <h1>Historie objednávek</h1>
+                <p>Zde jsou zobrazeny informace o vyřízených objednávkách dané restaurace.</p>
+
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Celé Jméno</th>
+                            <th>Datum</th>
+                            <th>Položky</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+      
+                        <tr>
+                            <td>02938</td>
+                            <td>Adam Novák</td>
+                            <td>1.1.1990</td>
+                            <td>1x pizza, 1x burger</td>
+                            <td>Dokončeno</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+
+            </div>
+            <div class="hidden">
+                <h1>Příjmy</h1>
+                <p>Zde jsou zobrazeny informace o příjmech dané restaurace.</p>
+
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Objednávka</th>
+                            <th>Datum</th>
+                            <th>Celková cena</th>
+                            <th>Poslíček</th>
+                            <th>rozvozJidla.cz</th>
+                            <th>Ostatní restaurace</th>
+                            <th>Tato restaurace</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+      
+                        <tr>
+                            <td>02938</td>
+                            <td>1.1.1990</td>
+                            <td>1000-Kč</td>
+                            <td>80,-Kč</td>
+                            <td>20,-Kč</td>
+                            <td>400,-Kč</td>
+                            <td><b>500,-Kč</b></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+</section>
+
+
+{% endblock %}

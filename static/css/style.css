@@ -621,6 +621,49 @@ SECTIONS
 
 
 /*
+BOX MANAGE
+*/
+
+.box-manage {
+    display: flex;
+    min-height: 100vh;
+    border: 1px solid #ddd;
+}
+
+.box-manage .menu {
+    width: 20%;
+    background-color: #f4f4f4;
+    border-right: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    margin: 0;
+}
+
+.box-manage .menu a {
+    text-decoration: none;
+    color: #333;
+    padding: 15px;
+    display: block;
+    transition: background-color 0.3s;
+}
+
+.box-manage .menu a:hover {
+    background-color: #c9c9c9;
+}
+
+.box-manage .menu a.active {
+    background-color: var(--main-color);
+    color: #fff;
+}
+
+.box-manage .content {
+    width: 80%;
+    padding: 20px;
+}
+
+
+/*
 FOOTER
 */
 
@@ -722,6 +765,9 @@ FORMS
 }
 
 .form-container .inp {
+    font-family: 'Arial';
+    font-weight: 0;
+    font-size: 13px;
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;

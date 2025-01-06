@@ -33,21 +33,27 @@ CREATE TABLE restaurace (
     id_restaurace INTEGER PRIMARY KEY AUTOINCREMENT,
     nazev TEXT NOT NULL,
     popis TEXT,
-    email TEXT UNIQUE NOT NULL,
+    email TEXT NOT NULL,
     telefon TEXT,
     adresa_ulice TEXT NOT NULL,
     adresa_cislo_domu TEXT NOT NULL,
     adresa_psc TEXT NOT NULL,
-    adresa_mesto TEXT NOT NULL
+    adresa_mesto TEXT NOT NULL,
+    image_url TEXT NOT NULL,
+    id_spravce INTEGER NOT NULL,
+    FOREIGN KEY (id_spravce) REFERENCES uzivatele(id_uzivatele)
 );
 """)
 
 c.execute("""
 CREATE TABLE produkty (
     id_produktu INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_restaurace INTEGER,
     nazev TEXT NOT NULL,
+    image_url TEXT NOT NULL,
     popis TEXT,
-    dostupnost BOOLEAN DEFAULT 1
+    dostupnost BOOLEAN DEFAULT 1,
+    FOREIGN KEY (id_restaurace) REFERENCES restaurace(id_restaurace)
 );
 """)
 
