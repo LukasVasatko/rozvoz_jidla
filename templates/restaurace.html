@@ -59,7 +59,7 @@
                 <div class="restaurant-content">
                     <h3 class="restaurant-title">Sushi</h3>
                     <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> Sportovní 2a, 602 00 Brno-střed</h5>
-                    <a href="#" class="restaurant-button">Zobrazit</a>
+                    <a href="{{ url_for('restaurace_nahled', restaurace_id=restaurace.id_restaurace) }}" class="restaurant-button">Zobrazit</a>
                 </div>
             </div>
             <div class="restaurant">
@@ -67,7 +67,7 @@
                 <div class="restaurant-content">
                     <h3 class="restaurant-title">Burgers</h3>
                     <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> Česká 142/29, 602 00 Brno-střed</h5>
-                    <a href="#" class="restaurant-button">Zobrazit</a>
+                    <a href="{{ url_for('restaurace_nahled', restaurace_id=restaurace.id_restaurace) }}" class="restaurant-button">Zobrazit</a>
                 </div>
             </div>
 

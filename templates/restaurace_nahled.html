@@ -41,9 +41,23 @@
                 <div class="restaurant-block-cart-panel">
                     <h3>Náhled košíku</h3>
                     <div class="restaurant-block-cart-items">
-                        Košík je prázdný, vyberte produkt.
+                        {% if session['kosik'] %}
+                            <ul>
+                                {% for produkt in session['kosik'] %}
+                                <li>{{ produkt['nazev'] }} - {{ produkt['cena'] }} Kč</li>
+                                {% endfor %}
+                            </ul>
+                            <p>Celková cena: {{ sum([p['cena'] for p in session['kosik']]) }} Kč</p>
+                        {% else %}
+                            <p>Košík je prázdný, vyberte produkt.</p>
+                        {% endif %}
                     </div>
-                    <button class="restaurant-block-continue-button">Pokračovat</button>
+                    {% if session['kosik'] %}
+                    <form method="POST" action="{{ url_for('odeslat_objednavku') }}">
+                        <textarea name="poznamka" placeholder="Poznámka pro kurýra"></textarea>
+                        <button type="submit" class="restaurant-block-continue-button">Pokračovat</button>
+                    </form>
+                    {% endif %}
                 </div>
        
             </section>
