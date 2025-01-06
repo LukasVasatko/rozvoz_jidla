@@ -34,7 +34,7 @@
                     <td>{{ uzivatel['email'] }}</td>
                     <td>{{ uzivatel['datum_registrace'] }}</td>
                     <td>{{ uzivatel['role'] }}</td>
-                    <td><a href="/smazat_uzivatele/{{ uzivatel['id_uzivatele'] }}" class="table-button"><i class="fa fa-trash" aria-hidden="true"></i> Smazat</a></td>
+                    <td><a href="/smazat_uzivatele/{{ uzivatel['id_uzivatele'] }}" class="table-button"><i class="fa fa-trash" aria-hidden="true"></i> Smazat</a> <a href="/nastavit_roli/{{ uzivatel['id_uzivatele'] }}/Uživatel" class="table-button"><i class="fa fa-user" aria-hidden="true"></i></a> <a href="/nastavit_roli/{{ uzivatel['id_uzivatele'] }}/Administrátor" class="table-button"><i class="fa fa-user-secret" aria-hidden="true"></i></a> <a href="/nastavit_roli/{{ uzivatel['id_uzivatele'] }}/Restaurace" class="table-button"><i class="fa fa-cutlery" aria-hidden="true"></i></a> <a href="/nastavit_roli/{{ uzivatel['id_uzivatele'] }}/Poslíček" class="table-button"><i class="fa fa-motorcycle" aria-hidden="true"></i></td>
                 </tr>
                 {% endfor %}
             </tbody>

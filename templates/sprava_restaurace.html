@@ -111,7 +111,7 @@
                         <tr>
                             <th>#ID</th>
                             <th>Název</th>
-                            <th>Cena</th>
+                            <th>Cena (Kč)</th>
                             <th>Popis</th>
                             <th>Akce</th>
                         </tr>
@@ -122,7 +122,7 @@
                         <tr>
                             <td>{{ produkty.id_produktu }}</td>
                             <td>{{ produkty.nazev }}</td>
-                            <td>XXX</td>
+                            <td>{{ produkty.castka }}</td>
                             <td>{{ produkty.popis }}</td>
                             <td><a href="/sprava_restaurace/{{ restaurace.id_restaurace }}/uprava_produkt_{{ produkty.id_produktu }}" class="table-button"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Upravit</a> <a href="/smazat_produkt/{{ produkty.id_produktu }}" class="table-button"><i class="fa fa-trash" aria-hidden="true"></i> Smazat</a></td>
                         </tr>
@@ -176,7 +176,7 @@
                         <input class="inp" type="text" placeholder="Název tohoto produktu" id="nazev" value="{{ produkt.nazev }}" name="nazev" required>
                 
                         <label class="lbl">Cena</label>
-                        <input class="inp" type="number" placeholder="Cena produktu" id="cena" value="500" name="cena" required>
+                        <input class="inp" type="number" placeholder="Cena produktu" id="cena" value="{{ produkt.castka }}" name="cena" required>
 
                         <label class="lbl">Obrázek produktu (url)</label>
                         <input class="inp" type="text" placeholder="Obrázek produktu" value="{{ produkt.image_url }}" id="url" name="url" required>

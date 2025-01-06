@@ -72,6 +72,7 @@ def registrace():
 
 @app.route('/odhlaseni')
 def odhlaseni():
+    session.pop('kosik', None)
     session.pop('user_id', None)
     session.pop('user_email', None)
     flash('Byli jste úspěšně odhlášeni.', 'Úspěch')
@@ -149,12 +150,12 @@ def sprava_restaurace(restaurace_id, info):
         produkty_podsekce = 'zpet'
     if 'uprava_produkt_' in info:
         idcko = int(info.replace("uprava_produkt_", ""))
-        produkt= conn.execute('SELECT * FROM produkty WHERE id_produktu = ?', (idcko,)).fetchone()
+        produkt= conn.execute('SELECT p.*, n.castka AS castka FROM produkty p LEFT JOIN nabidka_produktu n ON p.id_produktu = n.id_produktu AND n.platna_do IS NULL WHERE p.id_produktu = ?', (idcko,)).fetchone()
         produkty_podsekce = 'uprava'
 
     
     restaurace = conn.execute('SELECT * FROM restaurace WHERE id_restaurace = ?', (restaurace_id,)).fetchone()
-    produkty = conn.execute('SELECT * FROM produkty WHERE id_restaurace = ?', (restaurace_id,)).fetchall()
+    produkty = conn.execute('SELECT p.*, n.castka AS castka FROM produkty p LEFT JOIN nabidka_produktu n ON p.id_produktu = n.id_produktu AND n.platna_do IS NULL WHERE p.id_restaurace = ?', (restaurace_id,)).fetchall()
     conn.close()
     return render_template('sprava_restaurace.html', restaurace=restaurace, restaurace_id=restaurace_id, produkty=produkty, produkt=produkt, produkty_podsekce=produkty_podsekce, msgs=get_flashed_messages(with_categories=True))
 
@@ -233,7 +234,7 @@ def upravit_produkt(produkt_id):
         return render_template('index.html', msgs=get_flashed_messages(with_categories=True))
 
     conn = get_db_connection()
-    produkt = conn.execute('SELECT * FROM produkty WHERE id_produktu = ?', (produkt_id,)).fetchone()
+    produkt = conn.execute('SELECT p.*, n.castka AS castka FROM produkty p LEFT JOIN nabidka_produktu n ON p.id_produktu = n.id_produktu AND n.platna_do IS NULL WHERE p.id_produktu = ?', (produkt_id,)).fetchone()
     restaurace_id = produkt['id_restaurace']
     if not produkt:
         flash('Produkt nebyl nalezen!', 'Chyba')
@@ -272,7 +273,7 @@ def upravit_produkt(produkt_id):
                             (produkt_id, cena)
                         )
                         conn.commit()
-                        flash('Cena byla aktualizována. Starý záznam byl uzavřen a nový záznam vytvořen.', 'Úspěch')
+                        flash('Cena byla aktualizována.', 'Úspěch')
                 else:
                     conn.execute(
                         'INSERT INTO nabidka_produktu (id_produktu, castka, platna_od) VALUES (?, ?, CURRENT_TIMESTAMP)',
@@ -559,33 +560,77 @@ def restaurace2():
 @app.route('/restaurace/<int:restaurace_id>', methods=['GET'])
 def restaurace_nahled(restaurace_id):
     conn = get_db_connection()
-    restaurace = conn.execute("SELECT * FROM restaurace WHERE id_restaurace = ?",(restaurace_id,)).fetchone()
-    produkty = conn.execute("SELECT * FROM produkty WHERE id_restaurace = ?",(restaurace_id,)).fetchall()
+    restaurace = conn.execute("SELECT * FROM restaurace WHERE id_restaurace = ?", (restaurace_id,)).fetchone()
+    produkty = conn.execute("SELECT p.*, n.castka AS castka FROM produkty p LEFT JOIN nabidka_produktu n ON p.id_produktu = n.id_produktu AND n.platna_do IS NULL WHERE p.id_restaurace = ? AND p.dostupnost = '1'", (restaurace_id,)).fetchall()
+    conn.close()
+
+    kosik = session.get('kosik', [])
+    if not isinstance(kosik, list):
+        kosik = []
+
+    total = sum(produkt.get('castka', 0) for produkt in kosik if isinstance(produkt, dict) and 'castka' in produkt)
+
+    return render_template(
+        'restaurace_nahled.html',
+        restaurace_promenna=restaurace,
+        produkty_promenna=produkty,
+        kosik=kosik,
+        total=total, msgs=get_flashed_messages(with_categories=True)
+    )
+
+@app.route('/pridat_do_kosiku/<int:produkt_id>', methods=['GET'])
+def pridat_do_kosiku(produkt_id):
+    if not produkt_id:
+        flash('Nebyl zadán žádný produkt k přidání.', 'Chyba')
+        return redirect(request.referrer or url_for('home'))
     
-    return render_template('restaurace_nahled.html', restaurace_promenna=restaurace, produkty_promenna=produkty, msgs=get_flashed_messages(with_categories=True))
+    conn = get_db_connection()
+    nas_produkt = conn.execute('''
+        SELECT p.*, n.castka AS castka
+        FROM produkty p
+        LEFT JOIN nabidka_produktu n ON p.id_produktu = n.id_produktu AND n.platna_do IS NULL
+        WHERE p.id_produktu = ? AND p.dostupnost = '1'
+        LIMIT 1
+    ''', (produkt_id,)).fetchone()
+    conn.close()
 
-@app.route('/pridat_do_kosiku', methods=['POST'])
-def pridat_do_kosiku():
-    produkt_id = request.form['produkt_id']
-    nazev = request.form['produkt_nazev']
-    cena = float(request.form['produkt_cena'])
-    restaurace_id = request.form['restaurace_id']
-    if 'kosik' not in session:
-        session['kosik'] = []
-    session['kosik'].append({
-        'id': produkt_id,
-        'nazev': nazev,
-        'cena': cena,
-        'restaurace_id': restaurace_id
-    })
+    if nas_produkt is None:
+        flash('Produkt neexistuje nebo není dostupný.', 'Chyba')
+        return redirect(request.referrer or url_for('home'))
+
+    kosik = session.get('kosik', [])
+    if not isinstance(kosik, list):
+        kosik = []
+
+    kosik.append(dict(nas_produkt))
+    session['kosik'] = kosik
     session.modified = True
-    flash('Produkt přidán do košíku.', 'Úspěch')
-    return redirect(request.referrer)
 
+    flash('Produkt přidán do košíku.', 'Úspěch')
+    return redirect(request.referrer or url_for('restaurace'))
+
+
+@app.route('/odebrat_z_kosiku/<int:index>', methods=['GET'])
+def odebrat_z_kosiku(index):
+    kosik = session.get('kosik', [])
+    if not isinstance(kosik, list):
+        kosik = []
+
+    if 0 <= index < len(kosik):
+        del kosik[index]
+        session['kosik'] = kosik
+        session.modified = True
+        flash('Produkt byl odebrán z košíku.', 'Úspěch')
+    else:
+        flash('Neplatný index produktu.', 'Chyba')
+
+    return redirect(request.referrer or url_for('restaurace'))
+
+ 
 @app.route('/odeslat_objednavku', methods=['POST'])
 def odeslat_objednavku():
     if 'kosik' not in session or not session['kosik']:
-        flash('Košík je prázdný.', 'Chyba')
+        flash('Košík je prázdný.', 'error')
         return redirect(url_for('restaurant_page'))
     poznamka = request.form.get('poznamka', '')
     kosik = session['kosik']
@@ -598,15 +643,16 @@ def odeslat_objednavku():
     objednavka_id = cursor.lastrowid
     for produkt in kosik:
         cursor.execute("""
-            INSERT INTO polozky_objednavky (id_objednavky, id_produktu, cena)
+            INSERT INTO objednavky_produkty (id_objednavky, id_produktu, cena)
             VALUES (?, ?, ?)
         """, (objednavka_id, produkt['id'], produkt['cena']))
     conn.commit()
     conn.close()
     session.pop('kosik', None)
-    flash('Objednávka byla úspěšně odeslána.', 'Úspěch')
+    flash('Objednávka byla úspěšně odeslána.', 'success')
     return redirect(url_for('restaurant_page'))    
-
+ 
+ 
 
 @app.route('/sprava_uzivatelu', methods=['GET', 'POST'])
 def sprava_uzivatelu():
@@ -641,6 +687,25 @@ def smazat_uzivatele(user_id):
         conn.execute("DELETE FROM uzivatele WHERE id_uzivatele = ?", (user_id,))
         conn.commit()
         flash(f'Uživatel {user["jmeno"]} {user["prijmeni"]} byl úspěšně smazán!', 'Úspěch')
+
+    conn.close()
+    return redirect('/sprava_uzivatelu')
+
+@app.route('/nastavit_roli/<int:user_id>/<string:role>', methods=['GET'])
+def nastavit_roli(user_id, role):
+    if session.get('user_role') != 'Administrátor':
+        flash('Přístup zamítnut!', 'Chyba')
+        return render_template('index.html', msgs=get_flashed_messages(with_categories=True))
+
+    conn = get_db_connection()
+    user = conn.execute("SELECT * FROM uzivatele WHERE id_uzivatele = ?", (user_id,)).fetchone()
+
+    if not user:
+        flash('Uživatel nenalezen!', 'Chyba')
+    else:
+        conn.execute("UPDATE uzivatele SET role = ? WHERE id_uzivatele = ?", (role, user_id))
+        conn.commit()
+        flash(f'Role uživatele {user["jmeno"]} {user["prijmeni"]} byla úspěšně změněna na "{role}"!', 'Úspěch')
 
     conn.close()
     return redirect('/sprava_uzivatelu')

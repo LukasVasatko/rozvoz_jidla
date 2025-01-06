@@ -1,14 +1,14 @@
 {% extends 'main_structure.html' %}
-
+ 
 {% block contentmain %}
     <section class="welcome-page2">
         <h1>{{ restaurace_promenna.nazev }}</h1>
         <p>{{ restaurace_promenna.popis }}</p>
     </section>
-
-
-
-
+ 
+ 
+ 
+ 
     <section class="content-section">
  
         <section class="restaurant-block-content-section">
@@ -18,53 +18,66 @@
             <section class="restaurant-block-content">
                
                 <div class="restaurant-block-restaurant-list">
-                    <div class="restaurant-block-restaurant">
-                        <img src="images/pizza.jpg" alt="Sushi MORI">
-                        <div class="restaurant-block-restaurant-content">
-                            <h3 class="restaurant-block-restaurant-title">Pizza</h3>
-                            <h5 class="restaurant-block-restaurant-title2">199,00 Kč</h5>
-                            <a href="#" class="restaurant-block-restaurant-button"><i class="fa fa-shopping-cart" aria-hidden="true"></i> Do košíku</a>
-                            <a href="#" class="restaurant-block-restaurant-button2"><i class="fa fa-question-circle" aria-hidden="true"></i></a>
+                    {% for produkt in produkty_promenna %}
+                        <div class="restaurant-block-restaurant">
+                            <img src="{{ produkt.image_url }}" alt="{{ produkt.nazev }}">
+                            <div class="restaurant-block-restaurant-content">
+                                <h3 class="restaurant-block-restaurant-title">{{ produkt.nazev }}</h3>
+                                
+                                <h5 class="restaurant-block-restaurant-title2">{{ produkt.castka }} Kč</h5>
+                                {% if session.user_id %}
+                                <a href="/pridat_do_kosiku/{{ produkt.id_produktu }}" class="restaurant-block-restaurant-button"><i class="fa fa-shopping-cart" aria-hidden="true"></i> Do košíku</a>
+                                {% else %}
+                                <a href="#" onclick="event.preventDefault(); addAlert('Chyba','Nejste přihlášený!')" class="restaurant-block-restaurant-button"><i class="fa fa-shopping-cart" aria-hidden="true"></i> Do košíku</a>
+                                {% endif %}
+                            <a href="#" onclick="event.preventDefault(); addAlert('Informace','{{ produkt.popis }}')" aria-label="{{ produkt.popis }}" class="restaurant-block-restaurant-button2"><i class="fa fa-question-circle" aria-hidden="true"></i></a>
+                                
+                            </div>
+                            <br><br>
                         </div>
-                    </div>
-                    <div class="restaurant-block-restaurant">
-                        <img src="images/burger.jpg" alt="Burger King Brno Česká">
-                        <div class="restaurant-block-restaurant-content">
-                            <h3 class="restaurant-block-restaurant-title">Bruger</h3>
-                            <h5 class="restaurant-block-restaurant-title2">199,00 Kč</h5>
-                            <a href="#" class="restaurant-block-restaurant-button"><i class="fa fa-shopping-cart" aria-hidden="true"></i> Do košíku</a>
-                            <a href="#" class="restaurant-block-restaurant-button2"><i class="fa fa-question-circle" aria-hidden="true"></i></a>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
-       
                 <div class="restaurant-block-cart-panel">
                     <h3>Náhled košíku</h3>
                     <div class="restaurant-block-cart-items">
-                        {% if session['kosik'] %}
-                            <ul>
-                                {% for produkt in session['kosik'] %}
-                                <li>{{ produkt['nazev'] }} - {{ produkt['cena'] }} Kč</li>
-                                {% endfor %}
-                            </ul>
-                            <p>Celková cena: sum([p['cena'] for p in session['kosik']])  Kč</p>
+                        {% if kosik %}
+                        <ul>
+                            {% for produkt in kosik %}
+                            <li>
+                                {{ produkt.nazev }} - {{ produkt.castka }} Kč
+                                <a href="{{ url_for('odebrat_z_kosiku', index=loop.index0) }}" class="remove-item-link"> <i class="fa fa-trash" aria-hidden="true"></i></a>
+                            </li>
+                            {% endfor %}
+                        </ul>
                         {% else %}
-                            <p>Košík je prázdný, vyberte produkt.</p>
+                        <p>Košík je prázdný, vyberte produkt.</p>
                         {% endif %}
                     </div>
-                    {% if session['kosik'] %}
-                    <form method="POST" action="{{ url_for('odeslat_objednavku') }}">
-                        <textarea name="poznamka" placeholder="Poznámka pro kurýra"></textarea>
-                        <button type="submit" class="restaurant-block-continue-button">Pokračovat</button>
-                    </form>
+                
+                    {% if kosik %}
+                             <div class="form-container">
+                        <form method="post" action="/odeslat_objednavku">
+                            
+                            <label class="lbl">Celková cena: <span style="font-weight: 100;">{{ total }} ,-Kč</span></label>
+                            <br><br>
+    
+                            <label class="lbl">Poznámka</label>
+                            <textarea class="inp" placeholder="Zde můžete napsat poznámku pro kurýra" rows="3" id="poznamka" name="poznamka"></textarea>
+                    
+                    
+                            <button onclick="event.preventDefault(); addAlert('Chyba','Na funkci momentálně pracujeme..')" class="btn">Objednat</button>
+                        </form>
+                    </div>
                     {% endif %}
                 </div>
+                
+                
        
             </section>
         </section>
        
  
     </section>
-
-
+ 
+ 
 {% endblock %}
