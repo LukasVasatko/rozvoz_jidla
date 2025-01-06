@@ -54,22 +54,16 @@
 
 
         <div class="restaurant-list">
+            {% for restaurace in restaurace %}
             <div class="restaurant">
-                <img src="{{ url_for('static', filename='images/sushi.jpg') }}">
+                <img src="{{ restaurace.image_url }}">
                 <div class="restaurant-content">
-                    <h3 class="restaurant-title">Sushi</h3>
-                    <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> Sportovní 2a, 602 00 Brno-střed</h5>
+                    <h3 class="restaurant-title">{{ restaurace.nazev }}</h3>
+                    <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> {{ restaurace.adresa_ulice }} {{ restaurace.adresa_cislo_domu }}, {{ restaurace.adresa_psc }} {{ restaurace.adresa_mesto }}</h5>
                     <a href="{{ url_for('restaurace_nahled', restaurace_id=restaurace.id_restaurace) }}" class="restaurant-button">Zobrazit</a>
                 </div>
             </div>
-            <div class="restaurant">
-                <img src="{{ url_for('static', filename='images/burgerking.png') }}">
-                <div class="restaurant-content">
-                    <h3 class="restaurant-title">Burgers</h3>
-                    <h5 class="restaurant-title2"><i class="fa fa-map-marker" aria-hidden="true"></i> Česká 142/29, 602 00 Brno-střed</h5>
-                    <a href="{{ url_for('restaurace_nahled', restaurace_id=restaurace.id_restaurace) }}" class="restaurant-button">Zobrazit</a>
-                </div>
-            </div>
+            {% endfor %}
 
         </div>
 

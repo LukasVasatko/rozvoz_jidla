@@ -284,13 +284,15 @@ def prihlaseni():
 # Nutná oprava - kód z teams
 @app.route('/restaurace')
 def restaurace2():
-    return render_template('restaurace.html', msgs=get_flashed_messages(with_categories=True))    
+    conn = get_db_connection()
+    restaurace = conn.execute("SELECT * FROM restaurace").fetchall()
+    return render_template('restaurace.html', restaurace=restaurace, msgs=get_flashed_messages(with_categories=True))    
 
-@app.route('/restaurace/<int:restaurace_id>', methods=['GET'])
+@app.route('/restaurace_nahled/<int:restaurace_id>', methods=['GET'])
 def restaurace_nahled(restaurace_id):
     conn = get_db_connection()
-    restaurace = conn.execute("SELECT * FROM restaurace",(restaurace_id)).fetchone()
-    produkty = conn.execute("SELECT * FROM produkty",(restaurace_id)).fetchall()
+    restaurace = conn.execute("SELECT * FROM restaurace WHERE id_restaurace = ?",(restaurace_id)).fetchone()
+    produkty = conn.execute("SELECT * FROM produkty WHERE id_restaurace = ?",(restaurace_id)).fetchall()
     
     return render_template('restaurace_nahled.html', restaurace_promenna=restaurace, produkty_promenna=produkty)
 
