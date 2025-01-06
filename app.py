@@ -378,6 +378,10 @@ def prihlaseni():
 
     return render_template('prihlaseni.html', msgs=get_flashed_messages(with_categories=True))
 
+@app.route('/nastaveni')
+def nastaveni():
+    return render_template('nastaveni.html', msgs=get_flashed_messages(with_categories=True), get_user_by_id=get_user_by_id)   
+
 # Nutná oprava - kód z teams
 @app.route('/restaurace')
 def restaurace2():

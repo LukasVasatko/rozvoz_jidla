@@ -1,0 +1,134 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page2">
+        <h1>Nastavení</h1>
+        <p>Zde si můžete nastavit profil a vidět důležité informace</p>
+    </section>
+
+
+   
+
+
+    <section class="content-section">
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const menuLinks = document.querySelectorAll(".menu a");
+                const contentSections = document.querySelectorAll(".content > div");
+    
+                menuLinks.forEach((link, idx) => {
+                    link.addEventListener("click", (e) => {
+                        e.preventDefault();
+    
+                        menuLinks.forEach(menuLink => menuLink.classList.remove("active"));
+                        contentSections.forEach(section => section.style.display = "none");
+    
+                        link.classList.add("active");
+                        contentSections[idx].style.display = "block";
+                    });
+                });
+    
+                contentSections.forEach((section, idx) => {
+                    section.style.display = idx === 0 ? "block" : "none";
+                });
+            });
+        </script>
+    </head>
+    <body>
+    
+    <div class="box-manage">
+        <div class="menu">
+            <a href="#" class="active">Můj profil</a>
+            <a href="#" class="">Zabezpečení</a>
+            <a href="#" class="">Moje objednávky</a>
+        </div>
+        <div class="content">
+            <div>
+                <h1>Změna údajů</h1>
+                <p>Je důležité si často měnit heslo. My dbáme na bezpečnost.</p>
+
+                <div class="form-container">
+                    <form method="post" action="/zmena_udaju">
+                        <label class="lbl">Jméno</label>
+                        <input class="inp" type="text" name="jmeno" placeholder="Vaše jméno" value="{{ get_user_by_id(session.user_id).jmeno }}">
+            
+                        <label class="lbl">Přijmení</label>
+                        <input class="inp" type="text" name="prijmeni" placeholder="Vaše přijmení" value="{{ get_user_by_id(session.user_id).prijmeni }}">                        
+
+                        <label class="lbl">E-mail</label>
+                        <input class="inp" type="email" name="email" placeholder="Váš e-mail"  value="{{ get_user_by_id(session.user_id).email }}">
+
+                        <label class="lbl">Telefon</label>
+                        <input class="inp" type="tel" name="telefon" placeholder="Váš telefon"  value="{{ get_user_by_id(session.user_id).telefon }}">
+                
+                       
+                        <button type="submit" class="btn">Změnit</button>
+                    </form>
+                </div>
+
+                <h1>Adresy</h1>
+                <p>Zde se zobrazují všechny vaše adresy. Pokud chcete přidat adresu <a href="/pridat_adresu2">klikněte zde</a>.</p>
+
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Název</th>
+                            <th>Ulice</th>
+                            <th>č.p</th>
+                            <th>PSČ</th>
+                            <th>Město</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for restaurace in restaurace %}
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>
+                                <a href="/smazat_adresu/{{ adresa.id_adresy }}" class="table-button">Smazat</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not restaurace %}
+                    <p>Žádné restaurace nejsou k dispozici.</p>
+                {% endif %}
+                
+
+            </div>
+
+            <div class="hidden">
+                <h1>Změna hesla</h1>
+                <p>Je důležité si často měnit heslo. My dbáme na bezpečnost.</p>
+
+                <div class="form-container">
+                    <form method="post" action="/zmena_hesla">
+                        <label class="lbl">Staré heslo</label>
+                        <input class="inp" type="password" placeholder="Vaše nové heslo" id="heslo" name="heslo" required>
+                
+                        <label class="lbl">Nové heslo</label>
+                        <input class="inp" type="password" placeholder="Vaše staré heslo" id="heslo_nove" name="heslo_nove" required>
+                
+                       
+                        <button type="submit" class="btn">Změnit</button>
+                    </form>
+                </div>
+ 
+
+            </div>
+            
+            
+          
+        </div>
+    </div>
+
+</section>
+
+
+{% endblock %}
