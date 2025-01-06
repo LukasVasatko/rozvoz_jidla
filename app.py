@@ -128,22 +128,36 @@ def upravit_restauraci(id):
             conn.commit()
             conn.close()
             flash('Restaurace byla úspěšně upravena!', 'Úspěch')
-            return redirect(url_for('sprava_restaurace', restaurace_id=id))
+            return redirect(url_for('sprava_restaurace', restaurace_id=id, produkty_podsekce=''))
 
     conn.close()
     return redirect(url_for('sprava_restauraci'))
 
-
-@app.route('/sprava_restaurace/<int:restaurace_id>')
-def sprava_restaurace(restaurace_id):
-    if session.get('user_role') != 'Administrátor' and session.get('user_role') != 'Restaurace':
+@app.route('/sprava_restaurace/<int:restaurace_id>/', defaults={'info': ''})
+@app.route('/sprava_restaurace/<int:restaurace_id>/<string:info>')
+def sprava_restaurace(restaurace_id, info):
+    if session.get('user_role') not in ['Administrátor', 'Restaurace']:
         flash('Přístup zamítnut!', 'Chyba')
         return render_template('index.html', msgs=get_flashed_messages(with_categories=True))
 
     conn = get_db_connection()
+    produkty_podsekce = ''
+    produkt = None
+    if info == 'novy_produkt':
+        produkty_podsekce = 'novy'
+    if info == 'zpet':
+        produkty_podsekce = 'zpet'
+    if 'uprava_produkt_' in info:
+        idcko = int(info.replace("uprava_produkt_", ""))
+        produkt= conn.execute('SELECT * FROM produkty WHERE id_produktu = ?', (idcko,)).fetchone()
+        produkty_podsekce = 'uprava'
+
+    
     restaurace = conn.execute('SELECT * FROM restaurace WHERE id_restaurace = ?', (restaurace_id,)).fetchone()
+    produkty = conn.execute('SELECT * FROM produkty WHERE id_restaurace = ?', (restaurace_id,)).fetchall()
     conn.close()
-    return render_template('sprava_restaurace.html', restaurace=restaurace, restaurace_id=restaurace_id, msgs=get_flashed_messages(with_categories=True))
+    return render_template('sprava_restaurace.html', restaurace=restaurace, restaurace_id=restaurace_id, produkty=produkty, produkt=produkt, produkty_podsekce=produkty_podsekce, msgs=get_flashed_messages(with_categories=True))
+
 
 @app.route('/pridat_restauraci', methods=['GET', 'POST'])
 def pridat_restauraci():
@@ -195,19 +209,91 @@ def pridat_produkt(restaurace_id):
             flash('Chybí ti povinné údaje!', 'Chyba')
         else:
             conn = get_db_connection()
-            conn.execute('INSERT INTO produkty (nazev, cena, popis, restaurace_id) VALUES (?, ?, ?, ?)',
-                         (nazev, cena, popis, restaurace_id))
+            cursor = conn.execute('INSERT INTO produkty (nazev, popis, id_restaurace, dostupnost, image_url) VALUES (?, ?, ?, ?, ?)',
+                         (nazev, popis, restaurace_id, prodej_povolen, url))
             conn.commit()
+            id_produktu = cursor.lastrowid
+            print(id_produktu)
+            print('ID ^')
             flash('Produkt byl úspěšně přidán!', 'Úspěch')
             if prodej_povolen == '1':
-                flash('Nabídka pro produkt byla úspěšně vytvořena s požadovanou cenou! Nyní je v prodeji.', 'Úspěch')
-                conn.execute('INSERT INTO nabidka (nazev, cena, popis, restaurace_id) VALUES (?, ?, ?, ?)',
-                         (nazev, cena, popis, restaurace_id))
+                conn.execute('INSERT INTO nabidka_produktu (id_produktu, castka, platna_od) VALUES (?, ?, CURRENT_TIMESTAMP)',(id_produktu, cena))
                 conn.commit()
+                flash('Nabídka pro produkt byla úspěšně vytvořena s požadovanou cenou! Nyní je v prodeji.', 'Úspěch')
             conn.close()
-            return redirect(url_for('sprava_restaurace', restaurace_id=restaurace_id))
+            return redirect(url_for('sprava_restaurace', restaurace_id=restaurace_id, produkty_podsekce='novy'))
 
-    return render_template('sprava_restaurace.html', pridavani=True, restaurace_id=restaurace_id, msgs=get_flashed_messages(with_categories=True))
+    return render_template('sprava_restaurace.html', pridavani=True, restaurace_id=restaurace_id, produkty_podsekce='', msgs=get_flashed_messages(with_categories=True))
+
+
+@app.route('/upravit_produkt/<int:produkt_id>', methods=['GET', 'POST'])
+def upravit_produkt(produkt_id):
+    if session.get('user_role') != 'Administrátor' and session.get('user_role') != 'Restaurace':
+        flash('Přístup zamítnut!', 'Chyba')
+        return render_template('index.html', msgs=get_flashed_messages(with_categories=True))
+
+    conn = get_db_connection()
+    produkt = conn.execute('SELECT * FROM produkty WHERE id_produktu = ?', (produkt_id,)).fetchone()
+    restaurace_id = produkt['id_restaurace']
+    if not produkt:
+        flash('Produkt nebyl nalezen!', 'Chyba')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        nazev = request.form['nazev']
+        url = request.form['url']
+        prodej_povolen = request.form['prodej_povolen']
+        cena = request.form['cena']
+        popis = request.form['popis']
+
+        if not nazev or not cena or not url or not prodej_povolen:
+            flash('Chybí ti povinné údaje!', 'Chyba')
+        else:
+            conn.execute(
+                'UPDATE produkty SET nazev = ?, popis = ?, dostupnost = ?, image_url = ? WHERE id_produktu = ?',
+                (nazev, popis, prodej_povolen, url, produkt_id)
+            )
+            conn.commit()
+
+            if prodej_povolen == '1':
+                nabidka = conn.execute(
+                    'SELECT * FROM nabidka_produktu WHERE id_produktu = ? AND platna_do IS NULL',
+                    (produkt_id,)
+                ).fetchone()
+
+                if nabidka:
+                    if float(nabidka['castka']) != float(cena):
+                        conn.execute(
+                            'UPDATE nabidka_produktu SET platna_do = CURRENT_TIMESTAMP WHERE id_produktu = ? AND platna_do IS NULL',
+                            (produkt_id,)
+                        )
+                        conn.execute(
+                            'INSERT INTO nabidka_produktu (id_produktu, castka, platna_od) VALUES (?, ?, CURRENT_TIMESTAMP)',
+                            (produkt_id, cena)
+                        )
+                        conn.commit()
+                        flash('Cena byla aktualizována. Starý záznam byl uzavřen a nový záznam vytvořen.', 'Úspěch')
+                else:
+                    conn.execute(
+                        'INSERT INTO nabidka_produktu (id_produktu, castka, platna_od) VALUES (?, ?, CURRENT_TIMESTAMP)',
+                        (produkt_id, cena)
+                    )
+                    conn.commit()
+                    flash('Produkt byl přidán do nabídky.', 'Úspěch')
+            else:
+                conn.execute(
+                    'UPDATE nabidka_produktu SET platna_do = CURRENT_TIMESTAMP WHERE id_produktu = ? AND platna_do IS NULL',
+                    (produkt_id,)
+                )
+                conn.commit()
+                flash('Produkt byl odebrán z nabídky.', 'Úspěch')
+
+            flash('Produkt byl úspěšně upraven!', 'Úspěch')
+            conn.close()
+            return redirect(url_for('sprava_restaurace', restaurace_id=restaurace_id, produkty_podsekce='zpet'))
+
+    return render_template('sprava_restaurace.html', pridavani=True, restaurace_id=restaurace_id, produkty_podsekce='zpet', msgs=get_flashed_messages(with_categories=True))
+
 
 
 @app.route('/smazat_produkt/<int:produkt_id>', methods=['GET'])
@@ -220,6 +306,8 @@ def smazat_produkt(produkt_id):
     produkt = conn.execute('SELECT id_restaurace FROM produkty WHERE id_produktu = ?', (produkt_id,)).fetchone()
     if produkt:
         conn.execute('DELETE FROM produkty WHERE id_produktu = ?', (produkt_id,))
+        conn.commit()
+        conn.execute('DELETE FROM nabidka_produktu WHERE id_produktu = ?', (produkt_id,))
         conn.commit()
         flash('Produkt byl úspěšně smazán!', 'Úspěch')
     else:
@@ -236,6 +324,15 @@ def smazat_restauraci(restaurace_id):
     conn = get_db_connection()
     res = conn.execute('SELECT id_restaurace FROM restaurace WHERE id_restaurace = ?', (restaurace_id,)).fetchone()
     if res:
+        produkty = conn.execute('SELECT id_produktu FROM produkty WHERE id_restaurace = ?', (restaurace_id,)).fetchall()
+        for produkt in produkty:
+            produkt_id = produkt['id_produktu']
+            conn.execute('DELETE FROM nabidka_produktu WHERE id_produktu = ?', (produkt_id,))
+        conn.commit()
+        flash('Nabídka byla úspěšně smazána!', 'Úspěch')
+        conn.execute('DELETE FROM produkty WHERE id_restaurace = ?', (restaurace_id,))
+        flash('Produkty byly úspěšně smazány!', 'Úspěch')
+        conn.commit()
         conn.execute('DELETE FROM restaurace WHERE id_restaurace = ?', (restaurace_id,))
         conn.commit()
         flash('Restaurace byla úspěšně smazána!', 'Úspěch')

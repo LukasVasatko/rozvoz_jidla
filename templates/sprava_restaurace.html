@@ -12,41 +12,65 @@
 
     <section class="content-section">
         
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const menuLinks = document.querySelectorAll(".menu a");
-                const contentSections = document.querySelectorAll(".content > div");
-    
-                menuLinks.forEach((link, idx) => {
-                    link.addEventListener("click", (e) => {
-                        e.preventDefault();
-    
-                        menuLinks.forEach(menuLink => menuLink.classList.remove("active"));
-                        contentSections.forEach(section => section.style.display = "none");
-    
-                        link.classList.add("active");
-                        contentSections[idx].style.display = "block";
-                    });
-                });
-    
-                contentSections.forEach((section, idx) => {
-                    section.style.display = idx === 0 ? "block" : "none";
+       
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const menuLinks = document.querySelectorAll(".menu a");
+            const contentSections = document.querySelectorAll(".content > div");
+
+            const initialSection = "{{ produkty_podsekce }}";
+
+
+            let activeIndex = 0;
+            if (initialSection === "novy") {
+                activeIndex = 1;
+            }
+
+            if (initialSection === "uprava") {
+                activeIndex = 1;
+            }
+
+            if (initialSection === "zpet") {
+                activeIndex = 1;
+            }
+
+            menuLinks.forEach((link, idx) => {
+                if (idx === activeIndex) {
+                    link.classList.add("active");
+                } else {
+                    link.classList.remove("active");
+                }
+            });
+
+            contentSections.forEach((section, idx) => {
+                section.style.display = idx === activeIndex ? "block" : "none";
+            });
+
+            menuLinks.forEach((link, idx) => {
+                link.addEventListener("click", (e) => {
+                    e.preventDefault();
+
+                    menuLinks.forEach(menuLink => menuLink.classList.remove("active"));
+                    contentSections.forEach(section => section.style.display = "none");
+
+                    link.classList.add("active");
+                    contentSections[idx].style.display = "block";
                 });
             });
-        </script>
-    </head>
-    <body>
+        });
+    </script>
+ 
     
     <div class="box-manage">
         <div class="menu">
-            <a href="#" class="active">Správa restaurace</a>
-            <a href="#">Produkty</a>
+            <a href="#" class="{% if produkty_podsekce not in ['uprava', 'novy', 'zpet'] %}active{% endif %}">Správa restaurace</a>
+<a href="#" class="{% if produkty_podsekce in ['uprava', 'novy', 'zpet'] %}active{% endif %}">Produkty</a>
             <a href="#">Objednávky</a>
             <a href="#">Historie objednávek</a>
             <a href="#">Příjmy</a>
         </div>
         <div class="content">
-            <div>
+            <div class="{% if produkty_podsekce in ['uprava', 'novy', 'zpet'] %}hidden{% endif %}">
                 <h1>Správa restaurace</h1>
                 <p>Zde můžete spravovat různé části této restaurace.</p>
 
@@ -77,9 +101,10 @@
  
 
             </div>
-            <div class="hidden">
+            <div class="{% if produkty_podsekce not in ['uprava', 'novy'] %}hidden{% endif %}">
+                {% if produkty_podsekce not in ['uprava', 'novy'] %}
                 <h1>Produkty</h1>
-                <p>Zde se zobrazují produkty a jejich podrobnosti.</p>
+                <p>Zde se zobrazují produkty a jejich podrobnosti. Pokud chcete přidat nový <a href="/sprava_restaurace/{{ restaurace.id_restaurace }}/novy_produkt">klikněte zde</a>.</p>
 
                 <table class="modern-table" style="width: 100%;">
                     <thead>
@@ -91,19 +116,86 @@
                             <th>Akce</th>
                         </tr>
                     </thead>
+                    {% for produkty in produkty %}
                     <tbody>
       
                         <tr>
-                            <td>1</td>
-                            <td>Pizza</td>
-                            <td>280,-Kč</td>
-                            <td>Lahodná pizza z naší restaurace.</td>
-                            <td><a href="/produkt_uprava/" class="table-button"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Upravit</a> <a href="/storno_objednavky/" class="table-button"><i class="fa fa-trash" aria-hidden="true"></i> Smazat</a></td>
+                            <td>{{ produkty.id_produktu }}</td>
+                            <td>{{ produkty.nazev }}</td>
+                            <td>XXX</td>
+                            <td>{{ produkty.popis }}</td>
+                            <td><a href="/sprava_restaurace/{{ restaurace.id_restaurace }}/uprava_produkt_{{ produkty.id_produktu }}" class="table-button"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> Upravit</a> <a href="/smazat_produkt/{{ produkty.id_produktu }}" class="table-button"><i class="fa fa-trash" aria-hidden="true"></i> Smazat</a></td>
                         </tr>
 
                     </tbody>
+                    {% endfor %}
                 </table>
+                {% if not produkty %}
+                    <p>Žádné produkty nejsou k dispozici.</p>
+                {% endif %}
+                {% endif %}
+
+                {% if produkty_podsekce in ['novy'] %}
+                <h1>Produkty</h1>
+                <p>Zde můžete přidat nový produkt. Pokud se chcete vrátit <a href="/sprava_restaurace/{{ restaurace.id_restaurace }}/zpet">klikněte zde</a>.</p>
                 
+                <div class="form-container">
+                    <form method="post" action="/pridat_produkt/{{ restaurace.id_restaurace }}">
+                        <label class="lbl">Název produktu</label>
+                        <input class="inp" type="text" placeholder="Název tohoto produktu" id="nazev" name="nazev" required>
+                
+                        <label class="lbl">Cena</label>
+                        <input class="inp" type="number" placeholder="Cena produktu" id="cena" name="cena" required>
+
+                        <label class="lbl">Obrázek produktu (url)</label>
+                        <input class="inp" type="text" placeholder="Obrázek produktu" id="url" name="url" required>
+
+                        <label class="lbl">Produkt je dostupný</label>
+                        <select class="sel" id="prodej_povolen" name="prodej_povolen">
+                            <option value="1">Ano</option>
+                            <option value="0">Ne</option>
+                        </select>
+
+                        <label class="lbl">Popis produktu</label>
+                        <textarea class="inp" placeholder="Nějaké informace o produktu" rows="8" id="popis" name="popis" required></textarea>
+                
+                
+                        <button type="submit" class="btn">Vytvořit</button>
+                    </form>
+                </div>
+
+                {% endif %}
+
+                {% if produkty_podsekce in ['uprava'] %}
+                <h1>Produkty</h1>
+                <p>Zde můžete upravovat produkty. Pokud se chcete vrátit <a href="/sprava_restaurace/{{ restaurace.id_restaurace }}/zpet">klikněte zde</a>.</p>
+                
+                <div class="form-container">
+                    <form method="post" action="/upravit_produkt/{{ produkt.id_produktu }}">
+                        <label class="lbl">Název produktu</label>
+                        <input class="inp" type="text" placeholder="Název tohoto produktu" id="nazev" value="{{ produkt.nazev }}" name="nazev" required>
+                
+                        <label class="lbl">Cena</label>
+                        <input class="inp" type="number" placeholder="Cena produktu" id="cena" value="500" name="cena" required>
+
+                        <label class="lbl">Obrázek produktu (url)</label>
+                        <input class="inp" type="text" placeholder="Obrázek produktu" value="{{ produkt.image_url }}" id="url" name="url" required>
+
+                        <label class="lbl">Produkt je dostupný</label>
+                        <select class="sel" id="prodej_povolen" name="prodej_povolen" value="{{ produkt.dostupnost }}">
+                            <option value="1">Ano</option>
+                            <option value="0">Ne</option>
+                        </select>
+
+                        <label class="lbl">Popis produktu</label>
+                        <textarea class="inp" placeholder="Nějaké informace o produktu" rows="8" id="popis" name="popis" required>{{ produkt.popis }}</textarea>
+                
+                
+                        <button type="submit" class="btn">Upravit</button>
+                    </form>
+                </div>
+
+                {% endif %}
 
             </div>
             <div class="hidden">
