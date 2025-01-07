@@ -13,7 +13,9 @@
  
         <section class="restaurant-block-content-section">
        
-            <input type="text" class="restaurant-block-search-bar" placeholder="Vyhledat jídlo v restaurci...">
+            <form method="post" action="/restaurace/{{ restaurace_promenna.id_restaurace}}">
+                <input type="text" name="search" class="search-bar" placeholder="Vyhledat jídlo v restaurci..." value="{{ search_query }}">
+            </form>
        
             <section class="restaurant-block-content">
                
@@ -57,15 +59,15 @@
                     {% if kosik %}
                              <div class="form-container">
                         <form method="post" action="/odeslat_objednavku">
-                            
-                            <label class="lbl">Celková cena: <span style="font-weight: 100;">{{ total }} ,-Kč</span></label>
+                            <label class="lbl">Cena doručení: <span style="font-weight: 100;">80 ,-Kč</span></label>
+                            <label class="lbl">Celková cena: <span style="font-weight: 100;">{{ total+80 }} ,-Kč</span></label>
                             <br><br>
     
                             <label class="lbl">Poznámka</label>
                             <textarea class="inp" placeholder="Zde můžete napsat poznámku pro kurýra" rows="3" id="poznamka" name="poznamka"></textarea>
                     
                     
-                            <button onclick="event.preventDefault(); addAlert('Chyba','Na funkci momentálně pracujeme..')" class="btn">Objednat</button>
+                            <button type="submit" class="btn">Objednat</button>
                         </form>
                     </div>
                     {% endif %}

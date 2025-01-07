@@ -4,6 +4,17 @@ conn = sqlite3.connect('databaze.db')
 c = conn.cursor()
 
 c.execute("""
+CREATE TABLE log_finance (
+    id_zaznamu INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_restaurace INTEGER,
+    castka REAL NOT NULL,
+    castka_celkove REAL NOT NULL,
+    popis TEXT NOT NULL,
+    datum_provedeni DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+""")
+
+c.execute("""
 CREATE TABLE uzivatele (
     id_uzivatele INTEGER PRIMARY KEY AUTOINCREMENT,
     jmeno TEXT NOT NULL,
@@ -70,6 +81,7 @@ CREATE TABLE nabidka_produktu (
 );
 """)
 
+
 c.execute("""
 CREATE TABLE objednavky (
     id_objednavky INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,8 +89,7 @@ CREATE TABLE objednavky (
     datum_vytvoreni DATETIME DEFAULT CURRENT_TIMESTAMP,
     poznamka_pro_kurýra TEXT,
     jídlo_pripraveno BOOLEAN DEFAULT 0,
-    doruceno BOOLEAN DEFAULT 0,
-    FOREIGN KEY (id_uzivatele) REFERENCES uzivatele(id_uzivatele)
+    doruceno BOOLEAN DEFAULT 0
 );
 """)
 
@@ -86,9 +97,7 @@ c.execute("""
 CREATE TABLE objednavky_produkty (
     id_objednavky_produkty INTEGER PRIMARY KEY AUTOINCREMENT,
     id_objednavky INTEGER NOT NULL,
-    id_produktu INTEGER NOT NULL,
-    FOREIGN KEY (id_objednavky) REFERENCES objednavky(id_objednavky),
-    FOREIGN KEY (id_produktu) REFERENCES produkty(id_produktu)
+    id_nabidky INTEGER NOT NULL
 );
 """)
 
@@ -96,8 +105,8 @@ c.execute("""
 CREATE TABLE doruceni_objednavky (
     id_doruceni INTEGER PRIMARY KEY AUTOINCREMENT,
     id_objednavky INTEGER NOT NULL,
-    stav TEXT NOT NULL,
-    FOREIGN KEY (id_objednavky) REFERENCES objednavky(id_objednavky)
+    id_poslicka INTEGER,
+    stav TEXT NOT NULL
 );
 """)
 
@@ -105,17 +114,9 @@ c.execute("""
 CREATE TABLE operace_doruceni_objednavky (
     id_operace INTEGER PRIMARY KEY AUTOINCREMENT,
     id_doruceni INTEGER NOT NULL,
-    stav TEXT NOT NULL,
-    FOREIGN KEY (id_doruceni) REFERENCES doruceni_objednavky(id_doruceni)
-);
-""")
-
-c.execute("""
-CREATE TABLE log_finance (
-    id_zaznamu INTEGER PRIMARY KEY AUTOINCREMENT,
-    castka REAL NOT NULL,
-    popis TEXT NOT NULL,
-    datum_provedeni DATETIME DEFAULT CURRENT_TIMESTAMP
+    id_objednavnky_produkty INTEGER NOT NULL,
+    datum_prevzeti DATETIME,
+    stav TEXT NOT NULL
 );
 """)
 

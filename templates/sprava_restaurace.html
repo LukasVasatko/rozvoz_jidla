@@ -210,23 +210,24 @@
                             <th>Datum</th>
                             <th>Položky</th>
                             <th>Status</th>
-                            <th>Akce</th>
                         </tr>
                     </thead>
                     <tbody>
-      
+                        {% for obj in objednavky %}
                         <tr>
-                            <td>02938</td>
-                            <td>Adam Novák</td>
-                            <td>1.1.1990</td>
-                            <td>1x pizza, 1x burger</td>
-                            <td>Připravujeme</td>
-                            <td><a href="/pripraveni_objednavky/" class="table-button"><i class="fa fa-check-square-o" aria-hidden="true"></i> Připraveno</a> <a href="/storno_objednavky/" class="table-button"><i class="fa fa-ban" aria-hidden="true"></i> Storno</a></td>
+                            <td>{{ obj.id_objednavky }}</td>
+                            <td>{{ get_user_by_id(obj.id_uzivatele).jmeno }} {{ get_user_by_id(obj.id_uzivatele).prijmeni }}</td>
+                            <td>{{ obj.datum_vytvoreni }}</td>
+                            <td>{{ obj.produkty }}</td>
+                            <td>Čeká na přepravu</td>
                         </tr>
-
+                        {% endfor %}
+                        
                     </tbody>
                 </table>
-                
+                {% if objednavky|length == 0 %}
+                <p>Nejsou zde žádné aktivní objednávky.</p>
+                {% endif %}
 
             </div>
             <div class="hidden">
@@ -244,17 +245,22 @@
                         </tr>
                     </thead>
                     <tbody>
-      
+                        {% for obj in objednavky2 %}
                         <tr>
-                            <td>02938</td>
-                            <td>Adam Novák</td>
-                            <td>1.1.1990</td>
-                            <td>1x pizza, 1x burger</td>
-                            <td>Dokončeno</td>
+                            <td>{{ obj.id_objednavky }}</td>
+                            <td>{{ get_user_by_id(obj.id_uzivatele).jmeno }} {{ get_user_by_id(obj.id_uzivatele).prijmeni }}</td>
+                            <td>{{ obj.datum_vytvoreni }}</td>
+                            <td>{{ obj.produkty }}</td>
+                            <td>Čeká na přepravu</td>
                         </tr>
-
+                        {% endfor %}
+                        
                     </tbody>
                 </table>
+                {% if objednavky2|length == 0 %}
+                <p>Nejsou zde žádné dokončené objednávky.</p>
+                {% endif %}
+
 
             </div>
             <div class="hidden">
@@ -264,7 +270,7 @@
                 <table class="modern-table" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>Objednávka</th>
+                            <th>Transakce</th>
                             <th>Datum</th>
                             <th>Celková cena</th>
                             <th>Poslíček</th>
@@ -274,19 +280,22 @@
                         </tr>
                     </thead>
                     <tbody>
-      
+                        {% for transakce in transakce2 %}
                         <tr>
-                            <td>02938</td>
-                            <td>1.1.1990</td>
-                            <td>1000-Kč</td>
-                            <td>80,-Kč</td>
-                            <td>20,-Kč</td>
-                            <td>400,-Kč</td>
-                            <td><b>500,-Kč</b></td>
+                            <td>{{ transakce.id_zaznamu }}</td>
+                            <td>{{ transakce.datum_provedeni }}</td>
+                            <td>{{ transakce.castka_celkove + 80 }},-Kč</td>
+                            <td>70,-Kč</td>
+                            <td>10,-Kč</td>
+                            <td>{{ transakce.castka_celkove - transakce.castka }},-Kč</td>
+                            <td><b>{{ transakce.castka }},-Kč</b></td>
                         </tr>
-
+                        {% endfor %}
                     </tbody>
                 </table>
+                {% if transakce2|length == 0 %}
+                <p>Nejsou zde žádné transakce.</p>
+                {% endif %}
 
             </div>
         </div>
