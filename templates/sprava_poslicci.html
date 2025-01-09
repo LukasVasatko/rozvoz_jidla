@@ -1,0 +1,142 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page2">
+        <h1>Správa doručení</h1>
+        <p>Zde můžete vidět a spravovat aktivní objednávky</p>
+    </section>
+
+
+   
+
+
+    <section class="content-section">
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const menuLinks = document.querySelectorAll(".menu a");
+                const contentSections = document.querySelectorAll(".content > div");
+    
+                menuLinks.forEach((link, idx) => {
+                    link.addEventListener("click", (e) => {
+                        e.preventDefault();
+    
+                        menuLinks.forEach(menuLink => menuLink.classList.remove("active"));
+                        contentSections.forEach(section => section.style.display = "none");
+    
+                        link.classList.add("active");
+                        contentSections[idx].style.display = "block";
+                    });
+                });
+    
+                contentSections.forEach((section, idx) => {
+                    section.style.display = idx === 0 ? "block" : "none";
+                });
+            });
+        </script>
+    </head>
+    <body>
+    
+    <div class="box-manage">
+        <div class="menu">
+            <a href="#" class="active">Aktivní objednávky</a>
+            <a href="#">Příjmy</a>
+        </div>
+        <div class="content">
+            <div>
+                <h1>Aktivní objednávky</h1>
+                <p>Zde se zobrazují všechny objednávky co můžete doručit.</p>
+
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Uživatel</th>
+                            <th>Datum vytvoření</th>
+                            <th>Adresa lokace</th>
+                            <th>Úkol</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for objednavka in objednavky %}
+                        <tr>
+                            <td>{{ objednavka.id_objednavky }}</td>
+                            <td>{{ get_user_by_id(objednavka.id_uzivatele).jmeno }} {{ get_user_by_id(objednavka.id_uzivatele).prijmeni }}</td>
+                            <td>{{ objednavka.datum_vytvoreni }}</td>
+                            <td style="white-space: pre-wrap;">{{ objednavka.restaurace_produkty|safe }}</td>
+                            <td>
+                                {% if objednavka.objednavka_zabran != 1 %}
+                                Zaberte objednávku
+                                {% else %}
+                                {% if objednavka.doruceno != 1 and objednavka.jídlo_pripraveno == 1  %}
+                                Doručte objednávku
+                                {% else %}
+                                {% if objednavka.doruceno == 1  %}
+                                Doručeno
+                                {% else %}
+                                Vyzvedňete produkty
+                                {% endif %}
+                                {% endif %}
+                                {% endif %}
+
+                                
+                            </td>
+                            <td>
+                                {% if objednavka.objednavka_zabran != 1 %}
+                                <a href="/zabrat/{{ objednavka.id_objednavky }}" class="table-button">Převzít</a>
+                                {% endif %}
+
+                                {% if objednavka.doruceno != 1 and objednavka.jídlo_pripraveno == 1  %}
+                                <a href="/dorucit/{{ objednavka.id_objednavky }}" class="table-button">Doručit</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not objednavky %}
+                    <p>Žádné objednávky nejsou k dispozici.</p>
+                {% endif %}
+                
+
+            </div>
+
+            <div class="hidden">
+                <h1>Příjmy</h1>
+                <p>Zde můžete sledovat příjmy z doručování objednávek.</p>
+
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Datum</th>
+                            <th>Částka</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prij in prijmy %}
+                        <tr>
+                            <td>{{ prij.id_objednavky }}</td>
+                            <td>{{ prij.datum_vytvoreni }}</td>
+                            <td>70.0,-Kč</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not prijmy %}
+                    <p>Žádné záznamy nejsou k dispozici.</p>
+                {% endif %}
+
+               
+            </div>
+            
+            
+          
+        </div>
+    </div>
+
+</section>
+
+
+{% endblock %}

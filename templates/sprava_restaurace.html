@@ -251,7 +251,7 @@
                             <td>{{ get_user_by_id(obj.id_uzivatele).jmeno }} {{ get_user_by_id(obj.id_uzivatele).prijmeni }}</td>
                             <td>{{ obj.datum_vytvoreni }}</td>
                             <td>{{ obj.produkty }}</td>
-                            <td>Čeká na přepravu</td>
+                            <td>Dokončeno</td>
                         </tr>
                         {% endfor %}
                         
@@ -285,8 +285,8 @@
                             <td>{{ transakce.id_zaznamu }}</td>
                             <td>{{ transakce.datum_provedeni }}</td>
                             <td>{{ transakce.castka_celkove + 80 }},-Kč</td>
-                            <td>70,-Kč</td>
-                            <td>10,-Kč</td>
+                            <td>70.0,-Kč</td>
+                            <td>10.0,-Kč</td>
                             <td>{{ transakce.castka_celkove - transakce.castka }},-Kč</td>
                             <td><b>{{ transakce.castka }},-Kč</b></td>
                         </tr>

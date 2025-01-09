@@ -26,7 +26,11 @@ def get_user_by_id(idu):
     uziv = conn.execute('SELECT * FROM uzivatele WHERE id_uzivatele = ?', (idu,)).fetchone()
     return uziv
 
-
+def createLog(text):
+    conn = get_db_connection()
+    conn.execute('INSERT INTO log_system (zmena) VALUES ( ? );', (text,))
+    conn.commit()
+    conn.close()
 
 @app.route('/')
 def home1():
@@ -77,6 +81,252 @@ def odhlaseni():
     session.pop('user_email', None)
     flash('Byli jste úspěšně odhlášeni.', 'Úspěch')
     return redirect(url_for('prihlaseni'))
+
+@app.route('/sprava_poslicci')
+def sprava_poslicci():
+    if session.get('user_role') != 'Administrátor' and session.get('user_role') != 'Poslíček':
+        flash('Přístup zamítnut!', 'Chyba')
+        return render_template('index.html', msgs=get_flashed_messages(with_categories=True))
+
+
+    conn = get_db_connection()
+
+    prijmy = conn.execute("""
+        SELECT 
+            doo.id_objednavky,
+            o.datum_vytvoreni,
+            doo.id_poslicka
+        FROM doruceni_objednavky doo
+        JOIN objednavky o ON doo.id_objednavky = o.id_objednavky
+        WHERE doo.id_poslicka = ? AND doo.stav = 'Doručeno';
+    """, (session.get('user_id'),)).fetchall()
+
+
+    objednavky = conn.execute("""
+
+WITH restaurace_objednavky AS (
+    SELECT 
+        o.id_objednavky,
+        o.id_uzivatele,
+        o.doruceno,
+
+        o.poznamka_pro_kurýra,
+        o.datum_vytvoreni,
+        r.id_restaurace,
+        r.nazev AS restaurace_nazev,
+        r.adresa_ulice || ' ' || r.adresa_cislo_domu || ', ' || r.adresa_psc || ' ' || r.adresa_mesto AS restaurace_adresa,
+        COUNT(DISTINCT p.id_produktu) AS celkem_produktu,
+        SUM(CASE WHEN odo.stav = 'Vyzvednuto' THEN 1 ELSE 0 END) AS vyzvednute_produky,
+        o.jídlo_pripraveno
+    FROM objednavky o
+    JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky
+    JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky
+    JOIN produkty p ON np.id_produktu = p.id_produktu
+    JOIN restaurace r ON p.id_restaurace = r.id_restaurace
+    LEFT JOIN operace_doruceni_objednavky odo ON op.id_objednavky_produkty = odo.id_objednavnky_produkty
+    GROUP BY o.id_objednavky, o.id_uzivatele, o.poznamka_pro_kurýra, o.datum_vytvoreni, r.id_restaurace, o.jídlo_pripraveno
+),
+produkty_restaurace AS (
+    SELECT 
+        o.id_objednavky,
+        r.id_restaurace,
+        GROUP_CONCAT(
+            '- ' || p.nazev || ' ' || 
+            CASE 
+                WHEN odo.stav = 'Vyzvednuto' THEN '(✓)'
+                ELSE '(✗)'
+            END, 
+            '\n'
+        ) AS produkty
+    FROM objednavky o
+    JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky
+    JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky
+    JOIN produkty p ON np.id_produktu = p.id_produktu
+    JOIN restaurace r ON p.id_restaurace = r.id_restaurace
+    LEFT JOIN operace_doruceni_objednavky odo ON op.id_objednavky_produkty = odo.id_objednavnky_produkty
+    GROUP BY o.id_objednavky, r.id_restaurace
+)
+SELECT 
+    ro.id_objednavky,
+    ro.id_uzivatele,
+    ro.doruceno, 
+    ro.poznamka_pro_kurýra,
+    ro.jídlo_pripraveno,
+    ro.datum_vytvoreni,
+    GROUP_CONCAT(
+        CASE 
+            WHEN ro.jídlo_pripraveno = 1 THEN
+                'Doručte položky z ' || ro.restaurace_nazev || ' na:\n' ||
+                CASE 
+                    WHEN (SELECT hlavni_adresa FROM adresy_uzivatele WHERE id_uzivatele = ro.id_uzivatele AND hlavni_adresa = 1) IS NOT NULL 
+                    THEN 
+                        (SELECT adresa_ulice || ' ' || adresa_cislo_domu || ', ' || adresa_psc || ' ' || adresa_mesto 
+                         FROM adresy_uzivatele WHERE id_uzivatele = ro.id_uzivatele AND hlavni_adresa = 1)
+                    ELSE 
+                        'Uživatel adresu odebral. Nic mu nedoručujte.'
+                END
+            ELSE
+                'Název restaurace: ' || ro.restaurace_nazev || '\nAdresa: ' || ro.restaurace_adresa
+        END || 
+        CASE 
+            WHEN ro.jídlo_pripraveno = 1 THEN ''
+            ELSE 
+                CASE 
+                    WHEN ro.vyzvednute_produky < ro.celkem_produktu THEN '\n<a href="/vyzvednout_jidlo/' || ro.id_restaurace || '/' || ro.id_objednavky || '">[Vyzvednout]</a>' 
+                    ELSE '' 
+                END || '\nProdukty:\n' || IFNULL(pr.produkty, '- Žádné produkty')
+        END, 
+        '\n\n'
+    ) AS restaurace_produkty,
+    CASE 
+        WHEN EXISTS (
+            SELECT 1
+            FROM doruceni_objednavky doo
+            WHERE doo.id_objednavky = ro.id_objednavky
+        ) THEN 1
+        ELSE 0
+    END AS objednavka_zabran
+FROM restaurace_objednavky ro
+LEFT JOIN produkty_restaurace pr ON ro.id_objednavky = pr.id_objednavky AND ro.id_restaurace = pr.id_restaurace
+GROUP BY ro.id_objednavky, ro.id_uzivatele, ro.poznamka_pro_kurýra, ro.datum_vytvoreni;
+
+
+    """).fetchall()
+
+    return render_template(
+        'sprava_poslicci.html',
+        objednavky=objednavky,
+        msgs=get_flashed_messages(with_categories=True),
+        get_user_by_id=get_user_by_id,
+        prijmy=prijmy
+    )
+
+@app.route('/zabrat/<int:id_objednavky>')
+def zabrat_objednavku(id_objednavky):
+    conn = get_db_connection()
+    objednavka_zabrana = conn.execute("""
+        SELECT 1 FROM doruceni_objednavky
+        WHERE id_objednavky = ? AND stav = 'Zabráno'
+    """, (id_objednavky,)).fetchone()
+    
+    if objednavka_zabrana:
+        flash('Tato objednávka byla již zabrána.', 'Chyba')
+    else:
+        conn.execute("""
+            INSERT INTO doruceni_objednavky (id_objednavky, id_poslicka, stav)
+            VALUES (?, ?, 'Zabráno')
+        """, (id_objednavky, session.get('user_id')))
+        flash('Objednávka byla zabrána.', 'Úspěch')
+    
+    conn.commit()
+    conn.close()
+    return redirect(url_for('sprava_poslicci'))
+
+@app.route('/vyzvednout_jidlo/<int:id_restaurace>/<int:id_objednavky>')
+def vyzvednout_jidlo(id_restaurace, id_objednavky):
+    conn = get_db_connection()
+    
+    objednavka_zabrana = conn.execute("""
+        SELECT id_poslicka, id_doruceni FROM doruceni_objednavky
+        WHERE id_objednavky = ? AND stav = 'Zabráno'
+    """, (id_objednavky,)).fetchone()
+
+    if not objednavka_zabrana:
+        flash('Objednávka musí být zabrána, aby bylo možné převzít produkty.', 'Chyba')
+        return redirect(url_for('sprava_poslicci'))
+
+    if objednavka_zabrana[0] != session.get('user_id'):
+        flash('Objednávku musí převzít poslíček, který ji zabral.', 'Chyba')
+        return redirect(url_for('sprava_poslicci'))
+
+    produkty_celkove = conn.execute("""
+        SELECT COUNT(*) FROM objednavky_produkty op
+        JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky
+        WHERE op.id_objednavky = ?
+    """, (id_objednavky,)).fetchone()[0]
+
+    produkty_vyzvednute = conn.execute("""
+        SELECT COUNT(*) FROM operace_doruceni_objednavky
+        WHERE id_doruceni = ? AND stav = 'Vyzvednuto'
+    """, (objednavka_zabrana[1],)).fetchone()[0]
+
+    if produkty_celkove == produkty_vyzvednute:
+        flash('Všechny produkty byly již vyzvednuty.', 'Úspěch')
+    else:
+        produkty = conn.execute("""
+            SELECT op.id_objednavky_produkty, p.id_restaurace
+            FROM objednavky_produkty op
+            JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky
+            JOIN produkty p ON np.id_produktu = p.id_produktu
+            WHERE op.id_objednavky = ?
+        """, (id_objednavky,)).fetchall()
+
+        for produkt in produkty:
+            if produkt[1] == id_restaurace:  
+                conn.execute("""
+                    INSERT INTO operace_doruceni_objednavky (id_doruceni, id_objednavnky_produkty, stav, datum_prevzeti)
+                    VALUES (?, ?, 'Vyzvednuto', CURRENT_TIMESTAMP)
+                """, (objednavka_zabrana[1], produkt[0]))
+        
+        produkty_vyzvednute = conn.execute("""
+            SELECT COUNT(*) FROM operace_doruceni_objednavky
+            WHERE id_doruceni = ? AND stav = 'Vyzvednuto'
+        """, (objednavka_zabrana[1],)).fetchone()[0]
+
+        if produkty_celkove == produkty_vyzvednute:
+            conn.execute("""
+                UPDATE objednavky
+                SET jídlo_pripraveno = 1
+                WHERE id_objednavky = ?
+            """, (id_objednavky,))
+            flash('Všechno jídlo bylo vyzvednuto a objednávka byla připravena.', 'Úspěch')
+        else:
+            flash('Výborně, ještě pár produktů z jincýh restaurací a máte to kompletní.', 'Úspěch')
+
+    conn.commit()
+    conn.close()
+    return redirect(url_for('sprava_poslicci'))
+
+
+
+
+
+@app.route('/dorucit/<int:cislo_objednavky>', methods=['GET'])
+def dorucit_jidlo(cislo_objednavky):
+    conn = get_db_connection()
+
+    objednavka_zabrana = conn.execute("""
+        SELECT id_poslicka, id_doruceni
+        FROM doruceni_objednavky
+        WHERE id_objednavky = ? AND stav = 'Zabráno'
+    """, (cislo_objednavky,)).fetchone()
+
+    if not objednavka_zabrana:
+        flash('Objednávka musí být zabrána, aby bylo možné ji doručit.', 'Chyba')
+        return redirect(url_for('sprava_poslicci'))
+
+    if objednavka_zabrana[0] != session.get('user_id'):
+        flash('Objednávku může doručit pouze poslíček, který ji zabral.', 'Chyba')
+        return redirect(url_for('sprava_poslicci'))
+
+    conn.execute("""
+        UPDATE objednavky
+        SET doruceno = 1
+        WHERE id_objednavky = ?
+    """, (cislo_objednavky,))
+
+    conn.execute("""
+        UPDATE doruceni_objednavky
+        SET stav = 'Doručeno'
+        WHERE id_objednavky = ?
+    """, (cislo_objednavky,))
+
+    conn.commit()
+    conn.close()
+
+    flash('Objednávka byla úspěšně doručena.', 'Úspěch')
+    return redirect(url_for('sprava_poslicci'))
+
 
 
 @app.route('/sprava_restauraci')
@@ -157,63 +407,55 @@ def sprava_restaurace(restaurace_id, info):
         produkty_podsekce = 'uprava'
 
     objednavky = conn.execute("""
-    WITH produkty_restaurace AS (
-        SELECT p.id_produktu 
-        FROM produkty p 
-        WHERE p.id_restaurace = ?
-    ), 
-    objednavky_stav AS (
-        SELECT 
-            o.id_objednavky, 
-            o.id_uzivatele, 
-            o.poznamka_pro_kurýra, 
-            o.datum_vytvoreni,
-            GROUP_CONCAT(p.nazev, ', ') AS produkty, 
-            COUNT(DISTINCT op.id_nabidky) AS pocet_produktu, 
-            SUM(CASE WHEN o.doruceno IS NOT NULL AND p.id_produktu IN (SELECT id_produktu FROM produkty_restaurace) THEN 1 ELSE 0 END) AS dorucene_produkt, 
-            CASE 
-                WHEN COUNT(DISTINCT op.id_nabidky) = SUM(CASE WHEN o.doruceno IS NOT NULL AND p.id_produktu IN (SELECT id_produktu FROM produkty_restaurace) THEN 1 ELSE 0 END) 
-                THEN '1' 
-                ELSE '0' 
-            END AS status_obj 
-        FROM objednavky o 
-        JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky 
-        JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky 
-        JOIN produkty p ON np.id_produktu = p.id_produktu 
-        WHERE p.id_produktu IN (SELECT id_produktu FROM produkty_restaurace)
-        GROUP BY o.id_objednavky
-    ) 
-    SELECT * FROM objednavky_stav WHERE status_obj = '0'
+    WITH produkty_info AS (
+    SELECT 
+        o.id_objednavky,
+        GROUP_CONCAT(p.nazev, ', ') AS produkty,
+        COUNT(p.id_produktu) AS celkem_produktu,
+        COUNT(odo.id_objednavnky_produkty) AS produkty_v_operacich
+    FROM objednavky o
+    JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky
+    JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky
+    JOIN produkty p ON np.id_produktu = p.id_produktu
+    LEFT JOIN operace_doruceni_objednavky odo ON op.id_objednavky_produkty = odo.id_objednavnky_produkty
+    WHERE p.id_restaurace = ?
+    GROUP BY o.id_objednavky
+    HAVING celkem_produktu > produkty_v_operacich
+)
+SELECT 
+    o.id_objednavky,
+    o.id_uzivatele,
+    o.datum_vytvoreni,
+    IFNULL(pi.produkty, 'Žádné produkty k dispozici') AS produkty
+FROM objednavky o
+JOIN produkty_info pi ON o.id_objednavky = pi.id_objednavky;
+
 """, (restaurace_id,)).fetchall()
 
     objednavky2 = conn.execute("""
-    WITH produkty_restaurace AS (
-        SELECT p.id_produktu 
-        FROM produkty p 
-        WHERE p.id_restaurace = ?
-    ), 
-    objednavky_stav AS (
-        SELECT 
-            o.id_objednavky, 
-            o.id_uzivatele, 
-            o.poznamka_pro_kurýra, 
-            o.datum_vytvoreni,
-            GROUP_CONCAT(p.nazev, ', ') AS produkty, 
-            COUNT(DISTINCT op.id_nabidky) AS pocet_produktu, 
-            SUM(CASE WHEN o.doruceno IS NOT NULL AND p.id_produktu IN (SELECT id_produktu FROM produkty_restaurace) THEN 1 ELSE 0 END) AS dorucene_produkt, 
-            CASE 
-                WHEN COUNT(DISTINCT op.id_nabidky) = SUM(CASE WHEN o.doruceno IS NOT NULL AND p.id_produktu IN (SELECT id_produktu FROM produkty_restaurace) THEN 1 ELSE 0 END) 
-                THEN '1' 
-                ELSE '0' 
-            END AS status_obj 
-        FROM objednavky o 
-        JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky 
-        JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky 
-        JOIN produkty p ON np.id_produktu = p.id_produktu 
-        WHERE p.id_produktu IN (SELECT id_produktu FROM produkty_restaurace)
-        GROUP BY o.id_objednavky
-    ) 
-    SELECT * FROM objednavky_stav WHERE status_obj = '1'
+    WITH produkty_info AS (
+    SELECT 
+        o.id_objednavky,
+        GROUP_CONCAT(p.nazev, ', ') AS produkty,
+        COUNT(p.id_produktu) AS celkem_produktu,
+        COUNT(odo.id_objednavnky_produkty) AS produkty_v_operacich
+    FROM objednavky o
+    JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky
+    JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky
+    JOIN produkty p ON np.id_produktu = p.id_produktu
+    LEFT JOIN operace_doruceni_objednavky odo ON op.id_objednavky_produkty = odo.id_objednavnky_produkty
+    WHERE p.id_restaurace = ?
+    GROUP BY o.id_objednavky
+    HAVING celkem_produktu = produkty_v_operacich -- StatusC = 1 (všechny produkty v operacích)
+)
+SELECT 
+    o.id_objednavky,
+    o.id_uzivatele,
+    o.datum_vytvoreni,
+    IFNULL(pi.produkty, 'Žádné produkty k dispozici') AS produkty
+FROM objednavky o
+JOIN produkty_info pi ON o.id_objednavky = pi.id_objednavky;
+
 """, (restaurace_id,)).fetchall()
 
     transakce = conn.execute('SELECT * FROM log_finance WHERE id_restaurace = ?', (restaurace_id,)).fetchall() 
@@ -439,42 +681,41 @@ def nastaveni(info):
     conn = get_db_connection()
     adresy = conn.execute("SELECT * FROM adresy_uzivatele WHERE id_uzivatele = ?", (session.get('user_id'),)).fetchall()
     objednavky = conn.execute("""
-    WITH objednavky_stav AS (
-        SELECT 
-            o.id_objednavky, 
-            o.id_uzivatele, 
-            o.poznamka_pro_kurýra, 
-            o.datum_vytvoreni,
-            GROUP_CONCAT(p.nazev, ', ') AS produkty, 
-            COUNT(DISTINCT op.id_nabidky) AS pocet_produktu, 
-            SUM(CASE WHEN odo.datum_prevzeti IS NOT NULL THEN 1 ELSE 0 END) AS prevzato_produktu,  -- Počet převzatých produktů
-            SUM(CASE WHEN o.doruceno = 1 THEN 1 ELSE 0 END) AS dorucene_produktu,  -- Počet doručených produktů
-            CASE 
-                -- Pokud je počet převzatých produktů menší než celkový počet produktů
-                WHEN SUM(CASE WHEN odo.datum_prevzeti IS NOT NULL THEN 1 ELSE 0 END) < COUNT(DISTINCT op.id_nabidky)
-                THEN 'Převzato ' || SUM(CASE WHEN odo.datum_prevzeti IS NOT NULL THEN 1 ELSE 0 END) || '/' || COUNT(DISTINCT op.id_nabidky)
-                -- Pokud jsou všechny produkty převzaty a všechny produkty jsou doručeny
-                WHEN COUNT(DISTINCT op.id_nabidky) = SUM(CASE WHEN odo.datum_prevzeti IS NOT NULL THEN 1 ELSE 0 END) 
-                     AND SUM(CASE WHEN o.doruceno = 1 THEN 1 ELSE 0 END) = COUNT(DISTINCT op.id_nabidky)
-                THEN 'Doručeno'
-                -- Pokud všechny produkty byly převzaty, ale ne všechny jsou doručeny
-                WHEN SUM(CASE WHEN odo.datum_prevzeti IS NOT NULL THEN 1 ELSE 0 END) = COUNT(DISTINCT op.id_nabidky) 
-                     AND SUM(CASE WHEN o.doruceno = 1 THEN 1 ELSE 0 END) < COUNT(DISTINCT op.id_nabidky)
-                THEN 'Doručování'
-                -- Defaultní stav
-                ELSE 'Neznámý stav'
-            END AS special_status 
-        FROM objednavky o 
-        JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky 
-        JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky 
-        JOIN produkty p ON np.id_produktu = p.id_produktu 
-        LEFT JOIN doruceni_objednavky do ON do.id_objednavky = o.id_objednavky  -- Připojujeme doruceni_objednavky
-        LEFT JOIN operace_doruceni_objednavky odo ON odo.id_doruceni = do.id_doruceni  -- A nyní operace_doruceni_objednavky
-        GROUP BY o.id_objednavky
-    ) 
-    SELECT id_objednavky, id_uzivatele, produkty, datum_vytvoreni, special_status 
-    FROM objednavky_stav
-    WHERE id_uzivatele = ?
+    WITH produkty_info AS (
+    SELECT 
+        o.id_objednavky,
+        GROUP_CONCAT(p.nazev, ', ') AS produkty
+    FROM objednavky o
+    LEFT JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky
+    LEFT JOIN nabidka_produktu np ON op.id_nabidky = np.id_nabidky
+    LEFT JOIN produkty p ON np.id_produktu = p.id_produktu
+    GROUP BY o.id_objednavky
+),
+produkty_status AS (
+    SELECT 
+        o.id_objednavky,
+        COUNT(op.id_objednavky_produkty) AS max_produktu,
+        SUM(CASE WHEN odo.stav = 'Vyzvednuto' THEN 1 ELSE 0 END) AS aktualni_produktu
+    FROM objednavky o
+    LEFT JOIN objednavky_produkty op ON o.id_objednavky = op.id_objednavky
+    LEFT JOIN operace_doruceni_objednavky odo ON op.id_objednavky_produkty = odo.id_objednavnky_produkty
+    GROUP BY o.id_objednavky
+)
+SELECT 
+    o.id_objednavky,
+    o.id_uzivatele,
+    IFNULL(pi.produkty, 'Žádné produkty k dispozici') AS produkty,
+    o.datum_vytvoreni,
+    CASE
+        WHEN o.doruceno = 1 THEN 'Doručeno'
+        WHEN ps.aktualni_produktu = ps.max_produktu THEN 'Doručujeme na adresu'
+        ELSE 'Přebíráme produkty (' || ps.aktualni_produktu || '/' || ps.max_produktu || ')'
+    END AS special_status
+FROM objednavky o
+LEFT JOIN produkty_info pi ON o.id_objednavky = pi.id_objednavky
+LEFT JOIN produkty_status ps ON o.id_objednavky = ps.id_objednavky
+WHERE o.id_uzivatele = ?;
+
 """, (session.get('user_id'),)).fetchall()
 
 
@@ -514,6 +755,7 @@ def zmena_hesla():
     conn.commit()
     conn.close()
 
+    createLog(f'Uživatel {get_user_by_id(session.get('user_id'))['jmeno']} {get_user_by_id(session.get('user_id'))['prijmeni']} si změnil heslo do systému!')
     flash('Heslo bylo úspěšně změněno.', 'Úspěch')
     return redirect(url_for('nastaveni'))
 
@@ -825,27 +1067,23 @@ def odeslat_objednavku():
     conn.close()
     session.pop('kosik', None)
     flash('Objednávka byla úspěšně odeslána a za 30 minut bude u vás.', 'Úspěch')
+    createLog(f'Uživatel {get_user_by_id(session.get('user_id'))['jmeno']} {get_user_by_id(session.get('user_id'))['prijmeni']} vytvořil objednávku č. {objednavka_id}!')
     return redirect(request.referrer or url_for('restaurace'))
 
  
 
-@app.route('/sprava_uzivatelu', methods=['GET', 'POST'])
-def sprava_uzivatelu():
+@app.route('/sprava_systemu', methods=['GET', 'POST'])
+def sprava_systemu():
     if session.get('user_role') != 'Administrátor':
         flash('Přístup zamítnut!', 'Chyba')
         return render_template('index.html', msgs=get_flashed_messages(with_categories=True))
 
-    search_query = request.form.get('search', '').strip()
     conn = get_db_connection()
-
-    if search_query:
-        query = "SELECT * FROM uzivatele WHERE jmeno LIKE ? OR email LIKE ?"
-        users = conn.execute(query, (f"%{search_query}%", f"%{search_query}%")).fetchall()
-    else:
-        users = conn.execute("SELECT * FROM uzivatele").fetchall()
+    users = conn.execute("SELECT * FROM uzivatele").fetchall()
+    log = conn.execute("SELECT * FROM log_system").fetchall()
 
     conn.close()
-    return render_template('sprava_uzivatelu.html', uzivatele=users, search_query=search_query, msgs=get_flashed_messages(with_categories=True))
+    return render_template('sprava_systemu.html', uzivatele=users, log=log, msgs=get_flashed_messages(with_categories=True))
 
 @app.route('/smazat_uzivatele/<int:user_id>', methods=['GET'])
 def smazat_uzivatele(user_id):
@@ -861,10 +1099,11 @@ def smazat_uzivatele(user_id):
     else:
         conn.execute("DELETE FROM uzivatele WHERE id_uzivatele = ?", (user_id,))
         conn.commit()
+        createLog(f'Uživatel {get_user_by_id(session.get('user_id'))['jmeno']} {get_user_by_id(session.get('user_id'))['prijmeni']} smazal uživatele {user["jmeno"]} {user["prijmeni"]}!')
         flash(f'Uživatel {user["jmeno"]} {user["prijmeni"]} byl úspěšně smazán!', 'Úspěch')
 
     conn.close()
-    return redirect('/sprava_uzivatelu')
+    return redirect('/sprava_systemu')
 
 @app.route('/nastavit_roli/<int:user_id>/<string:role>', methods=['GET'])
 def nastavit_roli(user_id, role):
@@ -880,10 +1119,11 @@ def nastavit_roli(user_id, role):
     else:
         conn.execute("UPDATE uzivatele SET role = ? WHERE id_uzivatele = ?", (role, user_id))
         conn.commit()
+        createLog(f'Uživatel {get_user_by_id(session.get('user_id'))['jmeno']} {get_user_by_id(session.get('user_id'))['prijmeni']} změnil roli uživatele {user["jmeno"]} {user["prijmeni"]} na {role}!')
         flash(f'Role uživatele {user["jmeno"]} {user["prijmeni"]} byla úspěšně změněna na "{role}"!', 'Úspěch')
 
     conn.close()
-    return redirect('/sprava_uzivatelu')
+    return redirect('/sprava_systemu')
 
 
 @app.errorhandler(404)

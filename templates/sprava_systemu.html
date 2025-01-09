@@ -1,0 +1,121 @@
+{% extends 'main_structure.html' %}
+
+{% block contentmain %}
+    <section class="welcome-page2">
+        <h1>Správa systému</h1>
+        <p>Zde můžete spravovat uživatele a sledovat jejich aktivity v systému</p>
+    </section>
+
+
+   
+
+
+    <section class="content-section">
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const menuLinks = document.querySelectorAll(".menu a");
+                const contentSections = document.querySelectorAll(".content > div");
+    
+                menuLinks.forEach((link, idx) => {
+                    link.addEventListener("click", (e) => {
+                        e.preventDefault();
+    
+                        menuLinks.forEach(menuLink => menuLink.classList.remove("active"));
+                        contentSections.forEach(section => section.style.display = "none");
+    
+                        link.classList.add("active");
+                        contentSections[idx].style.display = "block";
+                    });
+                });
+    
+                contentSections.forEach((section, idx) => {
+                    section.style.display = idx === 0 ? "block" : "none";
+                });
+            });
+        </script>
+    </head>
+    <body>
+    
+    <div class="box-manage">
+        <div class="menu">
+            <a href="#" class="active">Uživatelé</a>
+            <a href="#">Log</a>
+        </div>
+        <div class="content">
+            <div>
+                <h1>Uživatelé</h1>
+                <p>Zde se zobrazují všichni uživatelé registrováni v systému.</p>
+
+        
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>Celé Jméno</th>
+                            <th>E-Mail</th>
+                            <th>Registrace</th>
+                            <th>Oprávnění</th>
+                            <th>Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for uzivatel in uzivatele %}
+                        <tr>
+                           
+                            <td>{{ uzivatel['jmeno'] }} {{ uzivatel['prijmeni'] }}</td>
+                            <td>{{ uzivatel['email'] }}</td>
+                            <td>{{ uzivatel['datum_registrace'] }}</td>
+                            <td>{{ uzivatel['role'] }}</td>
+                            <td><a href="/smazat_uzivatele/{{ uzivatel['id_uzivatele'] }}" class="table-button"><i class="fa fa-trash" aria-hidden="true"></i></a> <a href="/nastavit_roli/{{ uzivatel['id_uzivatele'] }}/Uživatel" class="table-button"><i class="fa fa-user" aria-hidden="true"></i></a> <a href="/nastavit_roli/{{ uzivatel['id_uzivatele'] }}/Administrátor" class="table-button"><i class="fa fa-user-secret" aria-hidden="true"></i></a> <a href="/nastavit_roli/{{ uzivatel['id_uzivatele'] }}/Restaurace" class="table-button"><i class="fa fa-cutlery" aria-hidden="true"></i></a> <a href="/nastavit_roli/{{ uzivatel['id_uzivatele'] }}/Poslíček" class="table-button"><i class="fa fa-motorcycle" aria-hidden="true"></i></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if uzivatele|length == 0 %}
+                <p>Podle výsledků vyhledávání nebyly žádní uživatelé nenalezeni. Je možné že se v databázi nenachází, nebo hledáte špatně.</p>
+                {% endif %}
+                
+
+            </div>
+
+            <div class="hidden">
+                <h1>Log</h1>
+                <p>Zde se zaznamenávají veškeré operace provedené v systému.</p>
+
+                <table class="modern-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Datum</th>
+                            <th>Operace</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for operace in log %}
+                        <tr>
+                           
+                            <td>{{ operace.id_zaznamu }}</td>
+                            <td>{{ operace.datum_provedeni }}</td>
+                            <td>{{ operace.zmena }}</td>
+                            
+                            
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if log|length == 0 %}
+                <p>Podle výsledků vyhledávání nebyly žádné záznamy nenalezeny.</p>
+                {% endif %}
+ 
+
+            </div>
+            
+            
+          
+        </div>
+    </div>
+
+</section>
+
+
+{% endblock %}

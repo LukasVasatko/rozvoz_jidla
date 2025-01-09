@@ -46,10 +46,13 @@
                 <span class="user-name">{{ session.user_cele_jmeno or 'Uživatel' }}</span>
                 <div class="user-dropdown">
                     {% if session.user_role == 'Administrátor' %}
-                    <a href="/sprava_uzivatelu"><i class="fa fa-users" aria-hidden="true"></i> Správa uživatelů</a>
+                    <a href="/sprava_systemu"><i class="fa fa-users" aria-hidden="true"></i> Správa systému</a>
                     {% endif %}
                     {% if session.user_role == 'Administrátor' or session.user_role == 'Restaurace' %}
                     <a href="/sprava_restauraci"><i class="fa fa-cutlery" aria-hidden="true"></i> Správa restaurací</a>
+                    {% endif %}
+                    {% if session.user_role == 'Administrátor' or session.user_role == 'Poslíček' %}
+                    <a href="/sprava_poslicci"><i class="fa fa-truck" aria-hidden="true"></i> Správa doručení</a>
                     {% endif %}
                     <a href="/nastaveni"><i class="fa fa-cogs" aria-hidden="true"></i> Nastavení</a>
                     <a href="/odhlaseni"><i class="fa fa-sign-out" aria-hidden="true"></i> Odhlásit se</a>
