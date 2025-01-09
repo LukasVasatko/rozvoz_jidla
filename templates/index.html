@@ -5,9 +5,12 @@
         <h1>Vítejte na rozvozJidla.cz</h1>
         <p>Ihned objednáš za 30 minut doma máš</p>
         <div class="search-container">
-                <input type="text" placeholder="Na co máte chuť?">
-            <button>Vyhledat</button>
+            <form action="/restaurace" method="post">
+                <input type="text" name="search" placeholder="Na co máte chuť?" required>
+                <button type="submit">Vyhledat</button>
+            </form>
         </div>
+        
     </section>
 
 
